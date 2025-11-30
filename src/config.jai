@@ -54,21 +54,81 @@ load_project_config :: () {
         };
     }
 
-    // [command]
-
-    // lines, valid := get_subsection_lines("command", file_data,, temp);
-    // if !valid return;
-
-    // for line: lines {
-    //     key, rhs := break_by_colon(line);
-
-    //     if key == {
-    //         case "find_global_text";
-    //             s := trim(rhs, "` ");
-    //             if !s continue;
-    //     };
-    // }
-
+    section, valid= := get_section_as_string("custom_commands", file_data);
+    if !valid {
+        log_error("Invalid or empty custom_commands section in the project config file!\n");
+        return;
+    }
+    
+    Command :: struct {
+        name:   string; // required
+        exec:   string; // required
+        hotkey: string;
+        workdir: string;
+        panel_state: enum u8 {none; partial; full;} = .partial;
+    };
+    commands: [..] Command;
+    
+    while true {
+        lines, should_continue := get_subsection_lines("command", section, break_after_first=true);
+        if !should_continue break;
+        log("\n>>lines: %\n\n", lines);
+        advance(*section, section.count);
+        
+        cmd: Command;
+        for line: lines {
+            key, rhs := break_by_colon(line);
+            if key == {
+                case "name";
+                    val := trim(rhs);
+                    if !begins_with(val, "\"") || !ends_with(val, "\"") {
+                        log_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
+                        continue;
+                    }
+                    val = advance(val, 1);
+                    val.count -= 1;
+                    cmd.name = val;
+                case "exec";
+                    val := trim(rhs);
+                    if !begins_with(val, "\"") || !ends_with(val, "\"") {
+                        log_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
+                        continue;
+                    }
+                    val = advance(val, 1);
+                    val.count -= 1;
+                    cmd.exec = val;
+                case "hotkey";
+                    val := trim(rhs);
+                    // @Todo:
+                case "open_panel";
+                    val, ok := get_enum_by_name(type_of(Command.panel_state), rhs);
+                    if !ok {
+                        log_error("'%' is !\n", rhs);
+                        continue;
+                    }
+                    cmd.panel_state = val;
+                case "workdir";
+                    val := trim(rhs);
+                    if !begins_with(val, "\"") || !ends_with(val, "\"") {
+                        log_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
+                        continue;
+                    }
+                    val = advance(val, 1);
+                    val.count -= 1;
+                    cmd.workdir = val;
+            }
+        }
+        
+        if !cmd.name || !cmd.exec {
+            log_error("Missing parameters for the [command]. The 'name' and the 'exec' parameter must be specified!\n");
+            continue;
+        }
+        
+        array_add(*commands, cmd);
+    }
+    
+    log("custom commands: %\n", commands);
+    
 }
 
 get_editor_config_path :: () -> string {
@@ -166,7 +226,6 @@ parse_style_section :: (file_data: string) -> bool {
                     val, success, rem := string_to_int(rhs, base=10, u8);
                     if !success || rem {
                         log_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
-                        continue;
                     }
                     font_size = val;
                     
@@ -258,11 +317,12 @@ get_section_as_string :: (name: string, data: string) -> string, bool {
     return r, !!r.count;
 }
 
-get_subsection_lines :: (name: string, data: string) -> [..] string, bool {
+get_subsection_lines :: (name: string, data: string, break_after_first := false) -> [..] string, bool {
     lines: [..] string;
     lines.allocator = temp;
 
     subsection := tprint("[%]", name);
+    success := false;
     add_lines := false;
     s := data;
     while true {
@@ -276,7 +336,12 @@ get_subsection_lines :: (name: string, data: string) -> [..] string, bool {
 
         if begins_with(line, "[") {
             if !ends_with(line, "]") return lines, false;
-            add_lines = line == subsection;
+            if add_lines && break_after_first {
+                add_lines = false;
+            } else {
+                add_lines = line == subsection;
+            }
+            success = true;
 
         } else if add_lines {
             array_add(*lines, line);
@@ -284,7 +349,7 @@ get_subsection_lines :: (name: string, data: string) -> [..] string, bool {
 
     }
 
-    return lines, true;
+    return lines, success;
 }
 
 config: Config;

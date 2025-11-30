@@ -485,6 +485,8 @@ maybe_grow :: (buffer: *Buffer, size: s64) {
 }
 
 buffer_reset :: (using buffer: *Buffer) {
+    ll("[%] (%)", buffer, ifx buffer.filepath then buffer.filepath else buffer.name);
+    
     for h: history {
         free_string(*h.text);
         free_string(*h.old_text);
@@ -1720,6 +1722,11 @@ editor_commands :: Editor_Command.[
         buffer.readonly = true;
         modify_string(*buffer.name, "Run Dwrite");
         change_active_buffer(editor, buffer);
+        editor.left_offset = 0;
+        editor.top_offset = 0;
+        // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
+        // this logic should be very different
+        for *c: buffer.cursor_backup    reset_cursor(c);
         reset_cursor(*editor.cursor);
         execute_custom_command(buffer, "../dwrite_jai/main.exe");
     }},
@@ -1740,6 +1747,11 @@ editor_commands :: Editor_Command.[
         buffer.readonly = true;
         modify_string(*buffer.name, "Compile");
         change_active_buffer(editor, buffer);
+        editor.left_offset = 0;
+        editor.top_offset = 0;
+        // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
+        // this logic should be very different
+        for *c: buffer.cursor_backup    reset_cursor(c);
         reset_cursor(*editor.cursor);
         execute_custom_command(buffer, "jai first.jai");
     }},
@@ -1760,6 +1772,11 @@ editor_commands :: Editor_Command.[
         buffer.readonly = true;
         modify_string(*buffer.name, "Compile & Run");
         change_active_buffer(editor, buffer);
+        editor.left_offset = 0;
+        editor.top_offset = 0;
+        // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
+        // this logic should be very different
+        for *c: buffer.cursor_backup    reset_cursor(c);
         reset_cursor(*editor.cursor);
         execute_custom_command(buffer, "jai first.jai - autorun");
     }},

@@ -1524,6 +1524,30 @@ init_editor_buffers :: (files_from_cmdline: [] string) {
     }
 }
 
+init_editor_commands :: (custom_commands: [] Editor_Command) {
+    array_reset_keeping_memory(*editor_commands);
+        
+    for DEFAULT_EDITOR_COMMANDS {
+        cmd: *Editor_Command;
+        cmd = array_add(*editor_commands);
+        cmd.proc = it.proc;
+        cmd.custom_command = false;
+        modify_string(*cmd.name, it.name);
+        // ll("added (default): %\n", cmd.*);
+    }
+    
+    for custom_commands {
+        cmd: *Editor_Command;
+        cmd = array_add(*editor_commands);
+        cmd.proc = null;
+        cmd.custom_command = true;
+        modify_string(*cmd.name, it.name);
+        modify_string(*cmd.exec, it.exec);
+        modify_string(*cmd.workdir, it.workdir);
+        // ll("added (custom): %\n", cmd.*);
+    }
+}
+
 maybe_add_buffer_to_editor_tabs :: (editor: *Editor, buffer: *Buffer) {
     found := find_buffer_within_editor_tabs(editor, buffer);
     if found return;
@@ -1689,97 +1713,24 @@ editor_panels_auto_size := true;
 editor_panels_width     := 0.0;
 editor_panels_grabbed_x := 0.0;
 
-editor_commands :: Editor_Command.[
-    .{"Open Editor Config",                 OpenEditorConfigFile},
-    .{"Open Project Config",                OpenProjectConfigFile},
-    .{"Reload Buffer From Disk",            ReloadBufferFromDisk},
-    .{"Transform Selection to Snake Case",  TransformSelectionToSnakeCase},
+editor_commands: [..] Editor_Command;
+
+DEFAULT_EDITOR_COMMANDS :: Editor_Command.[
+    .{name="Open Editor Config",                proc=(cmd: *Editor_Command) { OpenEditorConfigFile();         }},
+    .{name="Open Project Config",               proc=(cmd: *Editor_Command) { OpenProjectConfigFile();        }},
+    .{name="Reload Buffer From Disk",           proc=(cmd: *Editor_Command) { ReloadBufferFromDisk();         }},
+    .{name="Transform Selection to Snake Case", proc=(cmd: *Editor_Command) { TransformSelectionToSnakeCase(); }},
     
-    .{"[OS] Wait for os event",             () { wait_os_event_before_redraw = !wait_os_event_before_redraw; }},
+    .{name="[OS] Wait for os event",            proc=(cmd: *Editor_Command) { wait_os_event_before_redraw = !wait_os_event_before_redraw; }},
     
-    .{"[Video] Standard vsync",             () { video_set_vsync(.STANDARD); }},
-    .{"[Video] No Vsync",                   () { video_set_vsync(.DISABLED); }},
-    .{"[Video] Half vsync",                 () { video_set_vsync(.HALF    ); }},
-    .{"[Video] Adaptive vsync",             () { video_set_vsync(.ADAPTIVE); }},
+    .{name="[Video] Standard vsync",            proc=(cmd: *Editor_Command) { video_set_vsync(.STANDARD); }},
+    .{name="[Video] No Vsync",                  proc=(cmd: *Editor_Command) { video_set_vsync(.DISABLED); }},
+    .{name="[Video] Half vsync",                proc=(cmd: *Editor_Command) { video_set_vsync(.HALF    ); }},
+    .{name="[Video] Adaptive vsync",            proc=(cmd: *Editor_Command) { video_set_vsync(.ADAPTIVE); }},
     
-    .{"[DEV] Debug infos",                  () { show_debug_info = !show_debug_info; }},
-    .{"[DEV] Show Profiler",                () { show_profiler = !show_profiler; }},
-    .{"[DEV] Draw font metrics lines",      () { show_font_debug_info = !show_font_debug_info; }},
-    
-    .{"[RUN] Run Dwrite", () {
-        editor := get_bottom_editor();
-        buffer: *Buffer;
-        for tab: editor.tabs {
-            if tab.kind == .normal || !tab.stdout_in_progress {
-                buffer_reset(tab);
-                buffer = tab;
-                break;
-            }
-        }
-        if !buffer then buffer = create_or_find_empty_buffer(editor);
-        
-        buffer.kind = .stdout;
-        buffer.readonly = true;
-        modify_string(*buffer.name, "Run Dwrite");
-        change_active_buffer(editor, buffer);
-        editor.left_offset = 0;
-        editor.top_offset = 0;
-        // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
-        // this logic should be very different
-        for *c: buffer.cursor_backup    reset_cursor(c);
-        reset_cursor(*editor.cursor);
-        execute_custom_command(buffer, "../dwrite_jai/main.exe");
-    }},
-    
-    .{"[RUN] Compile", () {
-        editor := get_bottom_editor();
-        buffer: *Buffer;
-        for tab: editor.tabs {
-            if tab.kind == .normal || !tab.stdout_in_progress {
-                buffer_reset(tab);
-                buffer = tab;
-                break;
-            }
-        }
-        if !buffer then buffer = create_or_find_empty_buffer(editor);
-        
-        buffer.kind = .stdout;
-        buffer.readonly = true;
-        modify_string(*buffer.name, "Compile");
-        change_active_buffer(editor, buffer);
-        editor.left_offset = 0;
-        editor.top_offset = 0;
-        // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
-        // this logic should be very different
-        for *c: buffer.cursor_backup    reset_cursor(c);
-        reset_cursor(*editor.cursor);
-        execute_custom_command(buffer, "jai first.jai");
-    }},
-    
-    .{"[RUN] Compile & Run", () {
-        editor := get_bottom_editor();
-        buffer: *Buffer;
-        for tab: editor.tabs {
-            if tab.kind == .normal || !tab.stdout_in_progress {
-                buffer_reset(tab);
-                buffer = tab;
-                break;
-            }
-        }
-        if !buffer then buffer = create_or_find_empty_buffer(editor);
-        
-        buffer.kind = .stdout;
-        buffer.readonly = true;
-        modify_string(*buffer.name, "Compile & Run");
-        change_active_buffer(editor, buffer);
-        editor.left_offset = 0;
-        editor.top_offset = 0;
-        // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
-        // this logic should be very different
-        for *c: buffer.cursor_backup    reset_cursor(c);
-        reset_cursor(*editor.cursor);
-        execute_custom_command(buffer, "jai first.jai - autorun");
-    }},
+    .{name="[DEV] Debug infos",                 proc=(cmd: *Editor_Command) { show_debug_info = !show_debug_info; }},
+    .{name="[DEV] Show Profiler",               proc=(cmd: *Editor_Command) { show_profiler = !show_profiler; }},
+    .{name="[DEV] Draw font metrics lines",     proc=(cmd: *Editor_Command) { show_font_debug_info = !show_font_debug_info; }},
 ];
 
 BUFFER_PAGE_SIZE :: 4096;
@@ -1899,10 +1850,15 @@ Row_Info :: struct {
     size:  s64;
 }
 
-Editor_Command_Proc :: #type ();
+Editor_Command_Proc :: #type (self: *Editor_Command);
 Editor_Command :: struct {
-    name: string;
-    proc: Editor_Command_Proc;
+    name:   string; // required
+    proc: Editor_Command_Proc = null; // Reserved for pre-defined things
+    custom_command := false;
+    exec := ""; // required
+    hotkey := "";
+    workdir := "";
+    panel_state: enum u8 {none; partial; full;} = .partial;    
 }
 
 #scope_file

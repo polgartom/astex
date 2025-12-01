@@ -16,6 +16,10 @@ load_global_config :: () {
 }
 
 load_project_config :: () {
+    commands: [..] Editor_Command;
+    commands.allocator = temp;
+    defer init_editor_commands(commands); // @Hacky @Cleanup
+
     config_path := get_project_config_path();
     if !file_exists(config_path) return;
 
@@ -60,22 +64,12 @@ load_project_config :: () {
         return;
     }
     
-    Command :: struct {
-        name:   string; // required
-        exec:   string; // required
-        hotkey: string;
-        workdir: string;
-        panel_state: enum u8 {none; partial; full;} = .partial;
-    };
-    commands: [..] Command;
-    
+    remainder := section;
     while true {
-        lines, should_continue := get_subsection_lines("command", section, break_after_first=true);
+        lines, should_continue, remainder= := get_subsection_lines("command", remainder, break_after_first=true);
         if !should_continue break;
-        log("\n>>lines: %\n\n", lines);
-        advance(*section, section.count);
         
-        cmd: Command;
+        cmd: Editor_Command;
         for line: lines {
             key, rhs := break_by_colon(line);
             if key == {
@@ -101,7 +95,7 @@ load_project_config :: () {
                     val := trim(rhs);
                     // @Todo:
                 case "open_panel";
-                    val, ok := get_enum_by_name(type_of(Command.panel_state), rhs);
+                    val, ok := get_enum_by_name(type_of(Editor_Command.panel_state), rhs);
                     if !ok {
                         log_error("'%' is !\n", rhs);
                         continue;
@@ -123,12 +117,15 @@ load_project_config :: () {
             log_error("Missing parameters for the [command]. The 'name' and the 'exec' parameter must be specified!\n");
             continue;
         }
+        if !cmd.workdir {
+            // @Todo: Check if the given workdir is valid or not
+            cmd.workdir = get_workdir();
+        }
         
         array_add(*commands, cmd);
     }
     
-    log("custom commands: %\n", commands);
-    
+    // log("custom commands: %\n", commands);
 }
 
 get_editor_config_path :: () -> string {
@@ -317,7 +314,7 @@ get_section_as_string :: (name: string, data: string) -> string, bool {
     return r, !!r.count;
 }
 
-get_subsection_lines :: (name: string, data: string, break_after_first := false) -> [..] string, bool {
+get_subsection_lines :: (name: string, data: string, break_after_first := false) -> (lines: [..] string, success: bool, remainder: string) {
     lines: [..] string;
     lines.allocator = temp;
 
@@ -335,9 +332,12 @@ get_subsection_lines :: (name: string, data: string, break_after_first := false)
         if line.count == 0 continue;
 
         if begins_with(line, "[") {
-            if !ends_with(line, "]") return lines, false;
+            if !ends_with(line, "]") return lines, false, s; // Invalid subsection header
+            
             if add_lines && break_after_first {
-                add_lines = false;
+                delta := (line.data - data.data);
+                s = advance(data, delta);
+                break;
             } else {
                 add_lines = line == subsection;
             }
@@ -349,7 +349,7 @@ get_subsection_lines :: (name: string, data: string, break_after_first := false)
 
     }
 
-    return lines, success;
+    return lines, success, s;
 }
 
 config: Config;

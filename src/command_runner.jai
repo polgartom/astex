@@ -11,16 +11,18 @@ deinit_command_runner :: () {
     shutdown(*thread_group);
 }
 
-execute_custom_command :: (buffer: *Buffer, command: string) {
+execute_custom_command :: (buffer: *Buffer, command: Editor_Command) {
     assert(buffer.kind == .stdout && buffer.readonly);
     
     buffer.stdout_in_progress = true;
     buffer.stdout_stalled = true;
     
-    work := New(Custom_Command_Work); // @leak free it!
+    work := New(Custom_Command_Work);
     work.buffer = buffer;
-    modify_string(*work.command, command);
-    modify_string(*work.workdir, get_workdir());
+    
+    assert(!!command.workdir && !!command.exec);
+    modify_string(*work.command, command.exec);
+    modify_string(*work.workdir, command.workdir);
         
     add_work(*thread_group, work);
 }
@@ -37,7 +39,7 @@ command_runner_update :: () {
         buffer := current_work.buffer;
         
         if current_work.done {
-            current_work = null; // @leak
+            current_work = null;
         }
         
         unlock(*output_lock);

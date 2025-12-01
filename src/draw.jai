@@ -990,7 +990,7 @@ draw_command_browser :: () {
     theme.placeholder_color = #run hex_to_vec4(0xff_ff_ff_8a);
     theme.cursor_color = #run hex_to_vec4(0xff_ff_ff_c5);
 
-    w := 400.0; // @Tempoary
+    w := max(window_width * 0.4, 400); // @Tempoary
     k := window_height * .1;
 
     h := cast(float, font.character_height * 2.0);
@@ -1041,8 +1041,34 @@ draw_command_browser :: () {
         
         selected_option := options[linp.selected_index];
         cmd := selected_option.ref;
-        if cmd.proc {
-            cmd.proc();
+        if cmd.custom_command {
+            // @Todo @Incomplete @Cleanup
+            editor := get_bottom_editor();
+            buffer: *Buffer;
+            for tab: editor.tabs {
+                if tab.kind == .normal || !tab.stdout_in_progress {
+                    buffer_reset(tab);
+                    buffer = tab;
+                    break;
+                }
+            }
+            if !buffer then buffer = create_or_find_empty_buffer(editor);
+            
+            buffer.kind = .stdout;
+            buffer.readonly = true;
+            modify_string(*buffer.name, cmd.name);
+            change_active_buffer(editor, buffer);
+            editor.left_offset = 0;
+            editor.top_offset = 0;
+            // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
+            // this logic should be very different
+            for *c: buffer.cursor_backup    reset_cursor(c);
+            reset_cursor(*editor.cursor);
+            execute_custom_command(buffer, cmd);
+        } else {
+            log("## %\n", cmd.*);
+            assert(cmd.proc != null, "%\n", cmd.*);
+            cmd.proc(cmd);
         }
 
         linp.selected_index = -1;

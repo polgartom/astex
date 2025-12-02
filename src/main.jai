@@ -131,6 +131,10 @@ main :: () {
                 enable(*keymap_set, editor_keymap, mode == .EDITOR);
                 enable(*keymap_set, widget_keymap, mode == .WIDGET);
             } else {
+                assert(mode != .EDITOR);
+                // if mode == .EDITOR {
+                    // mode = .SPLASH;
+                // }
                 enable(*keymap_set, editor_keymap, false);
                 enable(*keymap_set, widget_keymap, true);
             }

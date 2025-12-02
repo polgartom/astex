@@ -15,7 +15,6 @@ insert_text_at_raw :: (buffer: *Buffer, at: s64, text: string) {
 }
 
 insert_text_at :: (editor: *Editor, buffer: *Buffer, at: s64, text: string, $history := true) {
-
     #if history {
         add_history(editor, buffer, .INSERT, text, Range.{at, at + text.count});
     }
@@ -304,13 +303,41 @@ find_buffer_by_filepath :: (filepath: string) -> *Buffer {
     return null;
 }
 
-create_or_find_empty_buffer :: (editor: *Editor) -> *Buffer {
+create_or_find_empty_buffer :: (editor: *Editor) -> *Buffer { // @Cleanup @Todo: Rename it!
     buffer: *Buffer;
 
     buffer = create_buffer();
     
     initialize_buffer(buffer);
 
+    return buffer;
+}
+
+create_buffer :: () -> *Buffer {
+    id: u64;
+    retry := true;
+    while retry {
+        id = random_get();
+        retry = false;
+        for b: buffers if b.id == id { retry = true; ll("id collision: % %\n", id, b.id); break; }
+    }
+    
+    buffer := New(Buffer);
+    buffer.id = id;
+    array_add(*buffers, buffer);
+
+    return buffer;
+}
+
+create_stdout_buffer :: () -> *Buffer {
+    using buffer := New(Buffer);
+    
+    kind = .stdout;
+    readonly = true;
+    pinned = true;
+    
+    initialize_buffer(buffer);
+    
     return buffer;
 }
 
@@ -1009,6 +1036,14 @@ close_tab :: (editor: *Editor, buffer: *Buffer) {
         }
     }
     
+    // @Todo:
+    ll("buffers: %\n", buffers);
+    if buffers.count == 0 {
+        for *e: editors {
+            if e == get_bottom_editor() continue;
+            assert(e.active_buffer == null, "%\n", e);
+        }
+    }
 }
 
 is_unsaved :: inline (using buffer: *Buffer) -> bool {
@@ -1075,34 +1110,6 @@ force_editors_viewports_recalculations :: () {
     }
 }
 
-create_buffer :: () -> *Buffer {
-    id: u64;
-    retry := true;
-    while retry {
-        id = random_get();
-        retry = false;
-        for b: buffers if b.id == id { retry = true; ll("id collision: % %\n", id, b.id); break; }
-    }
-    
-    buffer := New(Buffer);
-    buffer.id = id;
-    array_add(*buffers, buffer);
-
-    return buffer;
-}
-
-create_stdout_buffer :: () -> *Buffer {
-    using buffer := New(Buffer);
-    
-    kind = .stdout;
-    readonly = true;
-    pinned = true;
-    
-    initialize_buffer(buffer);
-    
-    return buffer;
-}
-
 change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
     current_buffer := editor.active_buffer;
     if current_buffer == next_buffer return;
@@ -1124,6 +1131,11 @@ change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
 }
 
 change_active_editor :: (editor: *Editor, change_mode := true) { // @Cleanup    
+    if !editor.active_buffer && editor.tabs {
+        change_active_buffer(editor, editor.tabs[0]);
+    }
+    
+    editor.visible = true;
     active_editor = editor;
     
     if change_mode {
@@ -1579,9 +1591,26 @@ remove_buffer_from_editor_tabs :: (editor: *Editor, buffer: *Buffer) -> (found_a
                 } else if index - 1 >= 0 {
                     change_active_buffer(editor, editor.tabs[index - 1]);
                 } else {
-                    new_buffer := create_or_find_empty_buffer(editor); // this gives a new buffer or a buffer that was uninitialized
-                    change_active_buffer(editor, new_buffer);
+                    editor.active_buffer = null;
+                    editor.visible = false;
+                    if active_editor == editor {
+                        active_editor = null;
+                        for *e: editors {
+                            if e == editor || get_bottom_editor() continue;
+                            if e.tabs {
+                                change_active_editor(e);
+                                break;
+                            }
+                        }
+                        if !active_editor {
+                            mode = .SPLASH;
+                        }
+                    }
                 }
+                 // else {
+                    // new_buffer := create_or_find_empty_buffer(editor); // this gives a new buffer or a buffer that was uninitialized
+                    // change_active_buffer(editor, new_buffer);
+                // }
             }
         
             array_ordered_remove_by_index(*editor.tabs, index);

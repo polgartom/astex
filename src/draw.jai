@@ -22,7 +22,8 @@ draw_frame :: () {
 
     bottom_editor_rect: Rect;
     bottom_editor_height := 0.0;
-    {
+    
+    if editors[2].active_buffer {
         editors[2].visible = false;
         for tab: editors[2].tabs {
             if tab.kind == .stdout {

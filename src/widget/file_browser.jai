@@ -77,9 +77,7 @@ _draw_file_browser :: () {
         
     text_input_height := cast(float, font.character_height * 2.0);
     b := cast(float, window_height - k*.1);
-    r := make_rect(window_width/2.0 - pad, b - text_input_height, xx w, text_input_height);
-    r.x = window_width*.5 - w;
-    r.w = w * 2.0;
+    r := make_rect(window_width/2.0 - w/2.0, b - text_input_height, xx w, text_input_height);
     r.y += 5.0; 
 
     tinp := fb_text_input;
@@ -148,7 +146,7 @@ _draw_file_browser :: () {
             linp.selected_index = -1;
             return;
         }
-                
+        
         opt := options[linp.selected_index];
         if opt.ref.is_directory {
             file_browser_change_dir(opt.ref.full_name);

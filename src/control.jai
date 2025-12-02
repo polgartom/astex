@@ -43,13 +43,17 @@ ReloadEditor :: () {
 }
 
 SwitchOrSplitEditorPanel :: () {
-    if !editors[1].tabs return;
-
     c := active_editor;
 
     if !editors[1].visible {
+        assert(active_editor != null);
+    
         editors[1].visible = true;
-        active_editor = *editors[1];
+                
+        if !editors[1].active_buffer {
+            buffer := create_or_find_empty_buffer(*editors[1]);
+            change_active_buffer(*editors[1], buffer);
+        }        
         
         {
             anim: Anim;
@@ -61,12 +65,10 @@ SwitchOrSplitEditorPanel :: () {
             anim.started_at = frame_time64;
             editors[1].width_anim = anim;
         }    
-        
-        return;
     }
 
-    if      *editors[0] == active_editor then active_editor = *editors[1];
-    else if *editors[1] == active_editor then active_editor = *editors[0];
+    if      *editors[0] == active_editor then change_active_editor(*editors[1]);
+    else if *editors[1] == active_editor then change_active_editor(*editors[0]);
 }
 
 HideSecondEditorPanel :: () {

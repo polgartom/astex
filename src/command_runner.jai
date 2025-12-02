@@ -88,7 +88,6 @@ command_threadproc :: (group: *Thread_Group, thread: *Thread, _work: *void) -> T
     
     lock(*output_lock);
     current_work = work;
-    work.buffer.destroyable = false;
     work.buffer.stdout_stalled = false;
     unlock(*output_lock);
      
@@ -146,7 +145,6 @@ command_threadproc :: (group: *Thread_Group, thread: *Thread, _work: *void) -> T
     
     lock(*output_lock);
     work.buffer.stdout_in_progress = false;
-    work.buffer.destroyable = true;
     work.done = true;
     unlock(*output_lock);
     

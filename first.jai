@@ -61,7 +61,7 @@ build :: () {
             set_build_options_dc(.{append_linker_arguments=.["/SUBSYSTEM:windows", "/ENTRY:mainCRTStartup"]}, w);
         }
 
-        options.output_executable_name = "asterisk";
+        options.output_executable_name = "astex";
 
     } else {
         options.backend = .X64;

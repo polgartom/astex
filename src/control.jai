@@ -33,9 +33,6 @@ Quit :: () {
 }
 
 // [Widget]
-CloseCurrentWidget :: () {
-    close_current_widget();
-}
 
 // [Editor]
 
@@ -46,6 +43,8 @@ ReloadEditor :: () {
 }
 
 SwitchOrSplitEditorPanel :: () {
+    if !editors[1].tabs return;
+
     c := active_editor;
 
     if !editors[1].visible {
@@ -1437,9 +1436,11 @@ register_keymap_procedures :: () {
 
     // Core
     Add(core_keymap, Quit);
+    Add(core_keymap, open_file_browser);
+    Add(core_keymap, close_current_widget);
 
     // Widget
-    Add(widget_keymap, CloseCurrentWidget);
+    Add(core_keymap, close_current_widget);
     
     // Editor
     
@@ -1447,7 +1448,7 @@ register_keymap_procedures :: () {
     
     Add(editor_keymap, open_command_browser);
     Add(editor_keymap, open_buffer_browser);
-    Add(editor_keymap, open_file_browser);
+    // Add(editor_keymap, open_file_browser);
     Add(editor_keymap, open_find_global_text_dialog);
     Add(editor_keymap, open_find_text_dialog);
     Add(editor_keymap, open_goto_line_dialog);

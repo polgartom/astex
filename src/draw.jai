@@ -34,7 +34,7 @@ draw_frame :: () {
         }
     }
 
-    if editors[0].visible && editors[1].visible {
+    if (editors[0].visible && editors[0].active_buffer) && (editors[1].visible && editors[1].active_buffer) {
         v := 1.0;
         if editors[1].width_anim.active {
             using editors[1].width_anim;
@@ -103,13 +103,14 @@ draw_frame :: () {
         
         right, left := cut_right(rect, editor_panels_width*v);
         
-        draw_editor(*editors[0], left);
-        if right.w != 0 {
+        if editors[0].active_buffer then draw_editor(*editors[0], left);
+        
+        if editors[1].active_buffer && right.w != 0 {
             draw_editor(*editors[1], right);
         }
     }
     
-    if editors[2].visible {
+    if editors[2].visible && editors[2].active_buffer {
         draw_editor(*editors[2], bottom_editor_rect);
         
         sepa_rect := bottom_editor_rect;
@@ -131,7 +132,7 @@ draw_frame :: () {
     }
     
     // Widgets
-    if mode == .WIDGET {
+    if mode == .WIDGET || mode == .SPLASH {
         draw_widgets();
     }
     
@@ -145,7 +146,6 @@ draw_frame :: () {
         draw_global_debug_info(get_not_active_editor().rect_for_draw);
         // draw_debug_mouse_character_selection(active_editor, active_editor.rect_for_draw);
     }
-    
         
     #if PROFILER && #exists(__Iprof) {
         if show_profiler {
@@ -768,7 +768,7 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
             left += width;
         }
 
-        assert(editor.cursor.pos <= editor.active_buffer.count, "buffer: % ; cursor: %\n", editor.active_buffer.count, editor.cursor.pos);
+        assert(editor.cursor.pos <= editor.active_buffer.count, "buffer: % ; cursor: % ; editor: %\n", editor.active_buffer.count, editor.cursor.pos, editor.*);
 
         row := find_row_index(editor.active_buffer, editor.cursor.pos) + 1;
         col := byte_pos_to_row_col_index(editor.active_buffer, editor.cursor.pos) + 1;
@@ -1045,25 +1045,29 @@ draw_command_browser :: () {
             // @Todo @Incomplete @Cleanup
             editor := get_bottom_editor();
             buffer: *Buffer;
-            for tab: editor.tabs {
-                if tab.kind == .normal || !tab.stdout_in_progress {
-                    buffer_reset(tab);
-                    buffer = tab;
-                    break;
+            if !buffer {
+                buffer = create_or_find_empty_buffer(editor);
+                for *e: editors {
+                    found := find_buffer_within_editor_tabs(e, buffer);
+                    assert(found == false);
                 }
             }
-            if !buffer then buffer = create_or_find_empty_buffer(editor);
+            
+            buffer_reset(buffer);
             
             buffer.kind = .stdout;
             buffer.readonly = true;
             modify_string(*buffer.name, cmd.name);
-            change_active_buffer(editor, buffer);
-            editor.left_offset = 0;
-            editor.top_offset = 0;
+            
             // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
             // this logic should be very different
             for *c: buffer.cursor_backup    reset_cursor(c);
-            reset_cursor(*editor.cursor);
+            change_active_buffer(editor, buffer);
+            editor.left_offset = 0;
+            editor.top_offset = 0;
+            assert(editor.cursor.pos == 0);
+            assert(editor.cursor.sel == 0);
+            
             execute_custom_command(buffer, cmd);
         } else {
             log("## %\n", cmd.*);
@@ -1408,6 +1412,7 @@ draw_goto_line_dialog :: () {
 
 draw_global_debug_info :: (r: Rect) {
     e,b := get_active_editor_and_buffer();
+    if !(e && b) return;
 
     Simp.immediate_begin();
         

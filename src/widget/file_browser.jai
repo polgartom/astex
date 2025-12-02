@@ -41,7 +41,6 @@ _draw_file_browser :: () {
 
     font := r_font_sm;
     pad  := cast(float32) font.em_width * .5;
-    ed_r := active_editor.rect_for_draw;
     
     theme := Text_Input.DEFAULT_THEME;
     theme.bg_color = #run hex_to_vec4(0x19_19_19_ff);
@@ -78,7 +77,7 @@ _draw_file_browser :: () {
         
     text_input_height := cast(float, font.character_height * 2.0);
     b := cast(float, window_height - k*.1);
-    r := make_rect(ed_r.x-pad, b - text_input_height, ed_r.w, text_input_height);
+    r := make_rect(window_width/2.0 - pad, b - text_input_height, xx w, text_input_height);
     r.x = window_width*.5 - w;
     r.w = w * 2.0;
     r.y += 5.0; 
@@ -147,13 +146,15 @@ _draw_file_browser :: () {
         if linp.selected_index >= options.count || linp.selected_index < 0 {
             log_error("Invalid index: % ; options: %\n", linp.selected_index, options);
             linp.selected_index = -1;
-            return;                
+            return;
         }
                 
         opt := options[linp.selected_index];
         if opt.ref.is_directory {
             file_browser_change_dir(opt.ref.full_name);
         } else {
+            if !active_editor then change_active_editor(get_left_editor());
+            
             buffer := open_file_or_create_empty_buffer(active_editor, opt.ref.full_name);
             change_active_buffer(active_editor, buffer);
             close_current_widget();

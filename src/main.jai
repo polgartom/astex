@@ -127,8 +127,13 @@ main :: () {
 
         {
             // @Cleanup: Remove it!!
-            enable(*keymap_set, editor_keymap, mode == .EDITOR);
-            enable(*keymap_set, widget_keymap, mode == .WIDGET);
+            if active_editor { 
+                enable(*keymap_set, editor_keymap, mode == .EDITOR);
+                enable(*keymap_set, widget_keymap, mode == .WIDGET);
+            } else {
+                enable(*keymap_set, editor_keymap, false);
+                enable(*keymap_set, widget_keymap, true);
+            }
         }
 
         wait_for_this_key_to_release: *u32; // Key_Code
@@ -266,9 +271,7 @@ main :: () {
 
         for *editor: editors {
             if !editor.visible continue;
-
-            assert(editor.active_buffer != null);
-            assert(editor.active_buffer.initialized);
+            if !editor.active_buffer continue;
 
             editor.cursor.x_cache = -1; // Because the prepare text is very slow
             get_cursor_x(editor.active_buffer, *editor.cursor);     // @temporary
@@ -591,8 +594,8 @@ show_line_numbers := true;
 draw_invisible_characters := false;
 #add_context draw_invisible_characters := false;
 
-mode := Program_Mode.EDITOR;
-Program_Mode :: enum u8 { EDITOR; WIDGET; };
+mode := Program_Mode.SPLASH;
+Program_Mode :: enum u8 { SPLASH; EDITOR; WIDGET; };
 
 keymap_cfg_section_data: string; // @Todo
 keymap_set:    Keymap_Set;

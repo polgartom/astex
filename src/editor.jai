@@ -294,15 +294,6 @@ count_buffers :: (using editor: *Editor, initialized: bool) -> (count: s64) {
     return count;
 }
 
-// @Cleanup Use -1 if failed
-find_buffer_index :: (buffer: *Buffer) -> (found: bool, index: s64) {
-    for buffers {
-        if it == buffer return true, it_index;
-    }
-
-    return false, -1;
-}
-
 find_buffer_by_filepath :: (filepath: string) -> *Buffer {
     for buffers {
         if it.exists_on_disk {
@@ -313,34 +304,10 @@ find_buffer_by_filepath :: (filepath: string) -> *Buffer {
     return null;
 }
 
-// @Cleanup Use -1 if failed
-find_initialized_buffer_index :: (using editor: *Editor) -> (found: bool, index: s64) {
-    for buffers {
-        if it.initialized return true, it_index;
-    }
-
-    return false, -1;
-}
-
-// @Cleanup Use -1 if failed
-find_uninitialized_buffer_index :: () -> (found: bool, index: s64) {
-    for buffers {
-        if !it.initialized return true, it_index;
-    }
-
-    return false, -1;
-}
-
 create_or_find_empty_buffer :: (editor: *Editor) -> *Buffer {
     buffer: *Buffer;
 
-    found, index := find_uninitialized_buffer_index();
-    if found {
-        assert(index > -1);
-        buffer = buffers[index];
-    } else {
-        buffer = create_buffer();
-    }
+    buffer = create_buffer();
     
     initialize_buffer(buffer);
 
@@ -485,6 +452,11 @@ maybe_grow :: (buffer: *Buffer, size: s64) {
 }
 
 buffer_reset :: (using buffer: *Buffer) {
+    for *e: editors {
+        found := find_buffer_within_editor_tabs(e, buffer);
+        assert(found == false, "The buffer must be removed from all of the editors tabs! This editor is uses it: % ; buffer: %\n", e.*, buffer.*);
+    }
+
     ll("[%] (%)", buffer, ifx buffer.filepath then buffer.filepath else buffer.name);
     
     for h: history {
@@ -503,7 +475,12 @@ buffer_reset :: (using buffer: *Buffer) {
     initialize_buffer(buffer);
 }
 
-buffer_destroy_and_remove_from_list :: (using buffer: *Buffer) {
+buffer_destroy :: (using buffer: *Buffer) {
+    for *e: editors {
+        found := find_buffer_within_editor_tabs(e, buffer);
+        assert(found == false, "The buffer must be removed from all of the editors tabs! This editor is uses it: % ; buffer: %\n", e.*, buffer.*);
+    }
+    
     ll("Buffer freed completely. [%] (%)", buffer, ifx buffer.filepath then buffer.filepath else buffer.name);
 
     for h: history {
@@ -516,13 +493,6 @@ buffer_destroy_and_remove_from_list :: (using buffer: *Buffer) {
     
     #insert __BUFFER_DESTROY_CODE;
     
-    for b: buffers {
-        if b == buffer {
-            remove b;
-            break;
-        }
-    }
-        
     free(buffer);
 }
 
@@ -865,13 +835,16 @@ pop_history_edit_group :: (b: *Buffer) {
     b.history_current_edit_group_id = id;
 }
 
-switch_editor_mode :: (switch_to: Program_Mode) {
-    if switch_to == {
-        case .EDITOR;
-            mode = .EDITOR;
-        case .WIDGET;
-            mode = .WIDGET;
+switch_editor_mode :: (switch_to: Program_Mode) { // @Cleanup: Remove it!
+    if switch_to == .EDITOR {
+        e, b := get_active_editor_and_buffer();
+        if !e {
+            log_error("Unable to switch the .EDITOR mode if we have no active editor!\n");
+            return;
+        }
     }
+    
+    mode = switch_to;
 }
 
 open_file_or_create_empty_buffer :: (editor: *Editor, _filepath: string) -> *Buffer {
@@ -988,7 +961,7 @@ save_buffer :: (using buffer: *Buffer) -> bool {
 
     ok := buffer_write_to_disk(buffer);
     
-    {
+    if buffer.kind == .editor_config {
         // @Temporary: We could flag the buffer, like .BUFFER_EDITOR_CONFIG or .BUFFER_PROJECT_CONFIG
         // Also we should put this in file watcher procedure
         config_path := get_editor_config_path();
@@ -1005,7 +978,10 @@ save_buffer :: (using buffer: *Buffer) -> bool {
 }
 
 close_tab :: (editor: *Editor, buffer: *Buffer) {
-    if !buffer.destroyable return;
+    if buffer.pinned {
+        ll("Pinned buffer cannot be closed! Buffer: %\n", buffer.*);
+        return;
+    }
 
     found, index := find_buffer_within_editor_tabs(editor, buffer);
     if !found return;
@@ -1024,7 +1000,13 @@ close_tab :: (editor: *Editor, buffer: *Buffer) {
     }
     
     if !some_editor_still_using_it {
-        buffer_destroy_and_remove_from_list(buffer);
+        buffer_destroy(buffer);
+        for b: buffers {
+            if b == buffer {
+                remove b;
+                break;
+            }
+        }
     }
     
 }
@@ -1082,7 +1064,7 @@ buffer_end :: inline (buffer: *Buffer) -> *u8 {
 }
 
 get_active_editor_and_buffer :: () -> (editor: *Editor, buffer: *Buffer) {
-    assert(active_editor != null && active_editor.active_buffer != null);
+    if !active_editor return null, null;
     return active_editor, active_editor.active_buffer;
 }
 
@@ -1109,20 +1091,17 @@ create_buffer :: () -> *Buffer {
     return buffer;
 }
 
-// create_readonly_buffer :: (name: string) -> *Buffer {
-    // assert(!!name, "You should provide a name!\n");
-// 
-    // b := create_buffer();
-    // b.readonly = true;
-    // b.initialized = true;
-// 
-    // fmt_name := sprint("* % *", name);
-    // defer free(fmt_name);
-    // modify_string(*b.name, fmt_name);
-    // commit_buffer_changes(b, true);
-// 
-    // return b;
-// }
+create_stdout_buffer :: () -> *Buffer {
+    using buffer := New(Buffer);
+    
+    kind = .stdout;
+    readonly = true;
+    pinned = true;
+    
+    initialize_buffer(buffer);
+    
+    return buffer;
+}
 
 change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
     current_buffer := editor.active_buffer;
@@ -1142,6 +1121,14 @@ change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
     editor.left_offset = 0.0;
     editor.top_offset  = 0.0;
     scroll_to_cursor(editor, editor.cursor, animation_duration=0.0);
+}
+
+change_active_editor :: (editor: *Editor, change_mode := true) { // @Cleanup    
+    active_editor = editor;
+    
+    if change_mode {
+        switch_editor_mode(.EDITOR);
+    }
 }
 
 scroll_to_cursor :: (editor: *Editor, cursor: Cursor, animation_duration: float = 0.08) {
@@ -1491,8 +1478,8 @@ init_editors :: () {
 }
 
 init_editor_buffers :: (files_from_cmdline: [] string) {
-    // log_buffer    = create_readonly_buffer("logs");
-    // logerr_buffer = create_readonly_buffer("errors");
+    if !files_from_cmdline return;
+    
     active_editor = *editors[0];
     active_editor.visible = true;
     if files_from_cmdline.count == 2 {
@@ -1516,20 +1503,36 @@ init_editor_buffers :: (files_from_cmdline: [] string) {
     }
 
     // @Todo: Don't draw the editor if no active buffer is assigned to
-    for *e: editors {
-        if !e.active_buffer {
-            b := create_or_find_empty_buffer(e);
-            change_active_buffer(e, b);
-        }
-    }
+    // for *e: editors {
+        // if !e.active_buffer {
+            // b := create_or_find_empty_buffer(e);
+            // change_active_buffer(e, b);
+        // }
+    // }
 }
 
 init_editor_commands :: (custom_commands: [] Editor_Command) {
+    editor := get_bottom_editor();
+    
+    for tab: editor.tabs {
+        if tab.kind == .normal && custom_commands.count { // @Temporary: We delete the initial empty buffer!
+            assert(editor.tabs.count == 1, "tab: %\n", tab.*);
+            buffer_destroy(tab);
+        }
+    }
+    editor.active_buffer = null;
+    array_reset_keeping_memory(*editor.tabs);
+
+    for * editor_commands {
+        if it.buffer {
+            buffer_destroy(it.buffer);
+            it.buffer = null;
+        }
+    }
     array_reset_keeping_memory(*editor_commands);
         
     for DEFAULT_EDITOR_COMMANDS {
-        cmd: *Editor_Command;
-        cmd = array_add(*editor_commands);
+        cmd := array_add(*editor_commands);
         cmd.proc = it.proc;
         cmd.custom_command = false;
         modify_string(*cmd.name, it.name);
@@ -1537,15 +1540,17 @@ init_editor_commands :: (custom_commands: [] Editor_Command) {
     }
     
     for custom_commands {
-        cmd: *Editor_Command;
-        cmd = array_add(*editor_commands);
+        cmd := array_add(*editor_commands);
         cmd.proc = null;
         cmd.custom_command = true;
         modify_string(*cmd.name, it.name);
         modify_string(*cmd.exec, it.exec);
         modify_string(*cmd.workdir, it.workdir);
+        cmd.buffer = create_stdout_buffer();
+        maybe_add_buffer_to_editor_tabs(editor, cmd.buffer);
         // ll("added (custom): %\n", cmd.*);
     }
+    
 }
 
 maybe_add_buffer_to_editor_tabs :: (editor: *Editor, buffer: *Buffer) {
@@ -1787,9 +1792,9 @@ Buffer :: struct {
     readonly: bool;
 
     kind: enum u8 { normal; editor_config; stdout; } = .normal;
+    pinned: bool;
     stdout_in_progress: bool; // @Temporary
     stdout_stalled: bool;     // @Temporary
-    destroyable := true;      // @Temporary
 
     colors: [] Color; @NeedsFree(c_free)
     row_table: [..] Row_Info; @NeedsFree(array_reset)
@@ -1858,7 +1863,8 @@ Editor_Command :: struct {
     exec := ""; // required
     hotkey := "";
     workdir := "";
-    panel_state: enum u8 {none; partial; full;} = .partial;    
+    panel_state: enum u8 {none; partial; full;} = .partial;
+    buffer: *Buffer;
 }
 
 #scope_file

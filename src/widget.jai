@@ -2,6 +2,7 @@ close_current_widget :: () {
     if active_widget == {
         case Find_Global_Text_Dialog; close_find_global_text_dialog();
     };
+    active_widget = Any;
     
     switch_editor_mode(.EDITOR);
 }

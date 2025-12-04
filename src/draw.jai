@@ -23,16 +23,21 @@ draw_frame :: () {
     bottom_editor_rect: Rect;
     bottom_editor_height := 0.0;
     
-    if editors[2].active_buffer {
-        editors[2].visible = false;
-        for tab: editors[2].tabs {
-            if tab.kind == .stdout {
-                editors[2].visible = true;
-                bottom_editor_height = 300.0;
-                bottom_editor_rect, rect = cut_bottom(rect, bottom_editor_height);
-                break;
-            }
-        }
+    // if editors[2].active_buffer {
+        // editors[2].visible = false;
+        // for tab: editors[2].tabs {
+            // if tab.kind == .stdout {
+                // editors[2].visible = true;
+                // bottom_editor_height = 300.0;
+                // bottom_editor_rect, rect = cut_bottom(rect, bottom_editor_height);
+                // break;
+            // }
+        // }
+    // }
+    
+    if editors[2].visible {
+        bottom_editor_height = 300.0;
+        bottom_editor_rect, rect = cut_bottom(rect, bottom_editor_height);
     }
 
     if (editors[0].visible && editors[0].active_buffer) && (editors[1].visible && editors[1].active_buffer) {
@@ -1051,6 +1056,8 @@ draw_command_browser :: () {
             editor.top_offset = 0;
             assert(editor.cursor.pos <= cmd.buffer.count);
             assert(editor.cursor.sel <= cmd.buffer.count);
+            
+            editor.visible = true;
             
             execute_custom_command(cmd);
         } else {

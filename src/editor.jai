@@ -1598,6 +1598,13 @@ init_editor_commands :: (custom_commands: [] Editor_Command) {
         // ll("added (custom): %\n", cmd.*);
     }
     
+    for editor_commands {
+        if it.buffer {
+            change_active_buffer(editor, it.buffer);
+            break;
+        }
+    }
+    
 }
 
 maybe_add_buffer_to_editor_tabs :: (editor: *Editor, buffer: *Buffer, append_to_end := false) {

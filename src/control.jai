@@ -42,6 +42,24 @@ ReloadEditor :: () {
     init_fonts();
 }
 
+ToggleBottomEditor :: () {
+    editor := get_bottom_editor();
+    if editor.tabs.count == 0 return;
+    
+    if editor.visible {
+        editor.visible = false;
+        
+        left_editor := get_left_editor();
+        if left_editor.visible {
+            change_active_editor(left_editor);
+        } else {
+            mode = .SPLASH;
+        }
+    } else {
+        editor.visible = true;
+    }
+}
+
 SwitchOrSplitEditorPanel :: () {
     current_editor := get_active_editor_and_buffer();
     if current_editor == get_bottom_editor() return;
@@ -1493,6 +1511,7 @@ register_keymap_procedures :: () {
     
     Add(editor_keymap, SwitchOrSplitEditorPanel);
     Add(editor_keymap, HideSecondEditorPanel);
+    Add(editor_keymap, ToggleBottomEditor);
     
     Add(editor_keymap, CreateBuffer);
     Add(editor_keymap, CloseCurrentBuffer);

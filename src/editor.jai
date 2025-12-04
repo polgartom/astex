@@ -1525,10 +1525,15 @@ init_editors :: () {
 }
 
 init_editor_buffers :: (files_from_cmdline: [] string) {
-    if !files_from_cmdline return;
-    
     active_editor = *editors[0];
     active_editor.visible = true;
+    
+    if !files_from_cmdline {
+        e := get_left_editor();
+        b := create_or_find_empty_buffer(e);
+        change_active_buffer(e, b);
+    }
+    
     if files_from_cmdline.count == 2 {
         // @Temporary
         b := open_file_or_create_empty_buffer(*editors[0], files_from_cmdline[0]);
@@ -1549,13 +1554,7 @@ init_editor_buffers :: (files_from_cmdline: [] string) {
         }
     }
 
-    // @Todo: Don't draw the editor if no active buffer is assigned to
-    // for *e: editors {
-        // if !e.active_buffer {
-            // b := create_or_find_empty_buffer(e);
-            // change_active_buffer(e, b);
-        // }
-    // }
+    change_active_editor(get_left_editor());
 }
 
 init_editor_commands :: (custom_commands: [] Editor_Command) {

@@ -1045,31 +1045,14 @@ draw_command_browser :: () {
         if cmd.custom_command {
             // @Todo @Incomplete @Cleanup
             editor := get_bottom_editor();
-            buffer: *Buffer;
-            if !buffer {
-                buffer = create_or_find_empty_buffer(editor);
-                for *e: editors {
-                    found := find_buffer_within_editor_tabs(e, buffer);
-                    assert(found == false);
-                }
-            }
-            
-            buffer_reset(buffer);
-            
-            buffer.kind = .stdout;
-            buffer.readonly = true;
-            modify_string(*buffer.name, cmd.name);
-            
-            // @Bug @Crash We should not able to select the buffer in other editor than the 3 (bottom), because in that case we have to clamp those cursors,
-            // this logic should be very different
-            for *c: buffer.cursor_backup    reset_cursor(c);
-            change_active_buffer(editor, buffer);
+            for *c: cmd.buffer.cursor_backup    reset_cursor(c);
+            change_active_buffer(editor, cmd.buffer);
             editor.left_offset = 0;
             editor.top_offset = 0;
-            assert(editor.cursor.pos == 0);
-            assert(editor.cursor.sel == 0);
+            assert(editor.cursor.pos <= cmd.buffer.count);
+            assert(editor.cursor.sel <= cmd.buffer.count);
             
-            execute_custom_command(buffer, cmd);
+            execute_custom_command(cmd);
         } else {
             log("## %\n", cmd.*);
             assert(cmd.proc != null, "%\n", cmd.*);

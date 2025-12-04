@@ -11,7 +11,7 @@ deinit_command_runner :: () {
     shutdown(*thread_group);
 }
 
-execute_custom_command :: (buffer: *Buffer, command: Editor_Command) {
+execute_custom_command :: (using cmd: Editor_Command) {
     assert(buffer.kind == .stdout && buffer.readonly);
     
     buffer.stdout_in_progress = true;
@@ -20,9 +20,9 @@ execute_custom_command :: (buffer: *Buffer, command: Editor_Command) {
     work := New(Custom_Command_Work);
     work.buffer = buffer;
     
-    assert(!!command.workdir && !!command.exec);
-    modify_string(*work.command, command.exec);
-    modify_string(*work.workdir, command.workdir);
+    assert(!!workdir && !!exec);
+    modify_string(*work.command, exec);
+    modify_string(*work.workdir, workdir);
         
     add_work(*thread_group, work);
 }

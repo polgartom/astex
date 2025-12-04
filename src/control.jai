@@ -43,7 +43,10 @@ ReloadEditor :: () {
 }
 
 SwitchOrSplitEditorPanel :: () {
-    c := active_editor;
+    current_editor := get_active_editor_and_buffer();
+    if current_editor == get_bottom_editor() return;
+
+    if !editors[1].tabs.count return;
 
     if !editors[1].visible {
         assert(active_editor != null);
@@ -67,11 +70,17 @@ SwitchOrSplitEditorPanel :: () {
         }    
     }
 
-    if      *editors[0] == active_editor then change_active_editor(*editors[1]);
-    else if *editors[1] == active_editor then change_active_editor(*editors[0]);
+    if *editors[0] == active_editor {
+        change_active_editor(*editors[1]);
+    } else if *editors[1] == active_editor {
+        change_active_editor(*editors[0]);
+    }
 }
 
 HideSecondEditorPanel :: () {
+    current_editor := get_active_editor_and_buffer();
+    if current_editor == get_bottom_editor() return;
+
     active_editor = *editors[0];
     editors[1].visible = false;
     
@@ -140,32 +149,57 @@ NextBuffer :: () {
 
 MoveCurrentTabToLeftEditor :: () {
     current_editor, buffer := get_active_editor_and_buffer();
+    if current_editor == get_bottom_editor() return;
+    
     left_editor := get_left_editor();
     if current_editor == left_editor return;
     
     found := find_buffer_within_editor_tabs(current_editor, buffer);
     assert(found);
     
+    left_editor.cursor = current_editor.cursor;
+    
     // maybe_add_buffer_to_editor_tabs(left_editor, buffer);
     change_active_buffer(left_editor, buffer); // this procedure adds the buffer to the tabs if needed
-    active_editor = left_editor;
+    change_active_editor(left_editor);
+    
     
     remove_buffer_from_editor_tabs(current_editor, buffer);
 }
 
 MoveCurrentTabToRightEditor :: () {
     current_editor, buffer := get_active_editor_and_buffer();
+    if current_editor == get_bottom_editor() return;
+    
     right_editor := get_right_editor();
     if current_editor == right_editor return;
     
     found := find_buffer_within_editor_tabs(current_editor, buffer);
     assert(found);
     
-    // maybe_add_buffer_to_editor_tabs(right_editor, buffer);
-    change_active_buffer(right_editor, buffer); // this procedure adds the buffer to the tabs if needed
-    active_editor = right_editor;
+    if current_editor.tabs.count == 1 {
+        found := find_buffer_within_editor_tabs(right_editor, buffer);
+        if !found {
+            buffer.cursor_backup[1] = current_editor.cursor;
+            change_active_buffer(right_editor, buffer); // this procedure adds the buffer to the tabs if needed
+            change_active_editor(right_editor);
+            return;
+        }
+    }
     
     remove_buffer_from_editor_tabs(current_editor, buffer);
+        
+    if current_editor.tabs.count {
+        buffer.cursor_backup[1] = buffer.cursor_backup[0];
+        change_active_buffer(right_editor, buffer); // this procedure adds the buffer to the tabs if needed
+        change_active_editor(right_editor);
+    } else {
+        buffer.cursor_backup[0] = current_editor.cursor;
+
+        move_right_editor_tabs_to_left(current_editor, right_editor);
+        change_active_buffer(current_editor, buffer);
+        change_active_editor(current_editor);
+    }
 }
 
 MoveTabToLeft :: () {

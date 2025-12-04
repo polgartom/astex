@@ -1026,7 +1026,9 @@ close_tab :: (editor: *Editor, buffer: *Buffer) {
         }
     }
     
-    if !some_editor_still_using_it {
+    if some_editor_still_using_it {
+            
+    } else {
         buffer_destroy(buffer);
         for b: buffers {
             if b == buffer {
@@ -1036,13 +1038,45 @@ close_tab :: (editor: *Editor, buffer: *Buffer) {
         }
     }
     
-    // @Todo:
+    if get_left_editor() == editor && editor.tabs.count == 0 {
+        move_right_editor_tabs_to_left(editor, get_right_editor());
+    }
+    
+    if get_right_editor() == editor && editor.tabs.count == 0 {
+        left_editor := get_left_editor();
+        if left_editor.tabs.count {
+            change_active_editor(left_editor);
+        }
+    }
+    
     ll("buffers: %\n", buffers);
     if buffers.count == 0 {
         for *e: editors {
             if e == get_bottom_editor() continue;
             assert(e.active_buffer == null, "%\n", e);
         }
+    }
+}
+
+move_right_editor_tabs_to_left :: (left_editor: *Editor, right_editor: *Editor) {
+    assert(left_editor == get_left_editor());
+    assert(right_editor == get_right_editor());
+        
+    right_editor.active_buffer = null;
+        
+    for tab: right_editor.tabs {
+        // tab.cursor_backup[1] = tab.cursor_backup[0];
+        maybe_add_buffer_to_editor_tabs(left_editor, tab, append_to_end=true);
+    }
+    for tab: right_editor.tabs {
+        remove tab;
+    }
+    assert(right_editor.tabs.count == 0, "%\n", right_editor.*);
+    
+    if left_editor.tabs.count {
+        change_active_editor(left_editor);
+    } else {
+        mode = .SPLASH;
     }
 }
 
@@ -1112,7 +1146,7 @@ force_editors_viewports_recalculations :: () {
 
 change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
     current_buffer := editor.active_buffer;
-    if current_buffer == next_buffer return;
+    // if current_buffer == next_buffer return;
     editor_index := get_editor_index(editor);
     if current_buffer {
         current_buffer.cursor_backup[editor_index] = editor.cursor; // Backing up the current cursor
@@ -1127,10 +1161,10 @@ change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
 
     editor.left_offset = 0.0;
     editor.top_offset  = 0.0;
-    scroll_to_cursor(editor, editor.cursor, animation_duration=0.0);
+    scroll_to_cursor(editor, editor.cursor, animation_duration=0);
 }
 
-change_active_editor :: (editor: *Editor, change_mode := true) { // @Cleanup    
+change_active_editor :: (editor: *Editor, change_mode := true) { // @Cleanup
     if !editor.active_buffer && editor.tabs {
         change_active_buffer(editor, editor.tabs[0]);
     }
@@ -1559,18 +1593,19 @@ init_editor_commands :: (custom_commands: [] Editor_Command) {
         modify_string(*cmd.exec, it.exec);
         modify_string(*cmd.workdir, it.workdir);
         cmd.buffer = create_stdout_buffer();
+        modify_string(*cmd.buffer.name, cmd.name);
         maybe_add_buffer_to_editor_tabs(editor, cmd.buffer);
         // ll("added (custom): %\n", cmd.*);
     }
     
 }
 
-maybe_add_buffer_to_editor_tabs :: (editor: *Editor, buffer: *Buffer) {
+maybe_add_buffer_to_editor_tabs :: (editor: *Editor, buffer: *Buffer, append_to_end := false) {
     found := find_buffer_within_editor_tabs(editor, buffer);
     if found return;
     
     found=, index := find_buffer_within_editor_tabs(editor, editor.active_buffer);
-    if found {
+    if found && !append_to_end {
         array_insert_at(*editor.tabs, buffer, index + 1); // Add the tab next to the currently active tab (buffer)
     } else {
         // Maybe it's the first buffer of the editor so at this point no buffer is exists in the editor.tabs array,

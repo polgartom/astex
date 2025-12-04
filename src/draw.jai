@@ -657,14 +657,14 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
             Simp.set_shader_for_color(true);
             Simp.immediate_quad(left, xx rect.y, xx (left + 1), xx (rect.y + rect.h), map_color_to_vec4(.LAYOUT_SEPARATOR));
             
-            if it_index != buffers.count - 1 {
+            if it_index != editor.tabs.count - 1 {
                 left += padding;
                 total_width += padding;
             }
         }
         
         if UI.hot_last_frame == tabs_ui_id {
-            avg_width := total_width / buffers.count / 2;
+            avg_width := total_width / editor.tabs.count / 2;
             if mouse_scrolled_on_frame == .up {
                 target := editor.tabs_left_offset - avg_width;
                 target = max(0.0, target);

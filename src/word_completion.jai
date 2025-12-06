@@ -81,6 +81,7 @@ word_complete_search :: () {
     right := cursor.pos;
     left  := seek_left_utf8_until_alphanum(buffer_str, cursor.pos, include_last_non_alphanum_char=false);
     initial_word = get_range_as_string(buffer_str, Range.{left, right});
+    log("> initial_word: |%|\n", initial_word);
 
     if initial_word.count == 0 then return;
 
@@ -145,6 +146,8 @@ word_complete_search :: () {
 
     add_new_result_or_update_delta(initial_word, delta = 0);
     for * word_complete.results { it.word = copy_string(it.word); }
+    
+    ll("%\n", word_complete.results);
 }
 
 word_complete_apply :: ($apply_history := false) {

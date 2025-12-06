@@ -49,14 +49,18 @@ ToggleBottomEditor :: () {
     if editor.visible {
         editor.visible = false;
         
-        left_editor := get_left_editor();
-        if left_editor.visible {
-            change_active_editor(left_editor);
-        } else {
-            mode = .SPLASH;
+        if active_editor == editor {
+            left_editor := get_left_editor();
+            if left_editor.visible {
+                change_active_editor(left_editor);
+            } else {
+                mode = .SPLASH;
+            }
         }
+        
     } else {
-        editor.visible = true;
+        // editor.visible = true;
+        change_active_editor(editor);
     }
 }
 

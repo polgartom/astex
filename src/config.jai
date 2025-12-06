@@ -7,12 +7,13 @@ load_global_config :: () {
     }
 
     data, ok := File.read_entire_file(config_path);
-    defer free_string(*data);
     if !ok {
         data = copy_string(DEFAULT_CONFIG_FILE_DATA);
     }
 
     parse_config("Global Config", config_path, data);
+    
+    free_string(*data);
 }
 
 load_project_config :: () {

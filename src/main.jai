@@ -209,17 +209,16 @@ main :: () {
                 mouse_down = cast(bool, event.key_pressed);
                 if mouse_down {
                     mouse_down_last_time_ms = frame_start_time_ms;
-                } else {
-                    // @Todo We should account for cases where the cursor moves beyond a certain range, as this should "invalidate" mouse clicks.
                     
+                    // @Todo We should account for cases where the cursor moves beyond a certain range, as this should "invalidate" mouse clicks.
                     // Maybe it's double click if we clicked on the previous frame and the interval between clicks was less than 250.0ms. 
                     if (frame_start_time_ms - mouse_clicked_last_time_ms) <= 300.0 { // Windows default is 500 ms, many games use 250–350 ms.
-                        if (frame_start_time_ms - mouse_dbl_clicked_last_time_ms) > 300.0 { // mouse double click cooldown
+                        if frame_start_time_ms - mouse_dbl_clicked_last_time_ms > 300.0 { // mouse double click cooldown
                             mouse_dbl_clicked = true;
                             mouse_dbl_clicked_last_time_ms = frame_start_time_ms;
                         }
                     }
-                
+                } else {                                    
                     if (frame_start_time_ms - mouse_down_last_time_ms) <= 200.0 { // Max allowed delay between press and release → 150–250 ms (Most systems use around 200 ms.)
                         mouse_clicked = true;
                         mouse_clicked_last_time_ms = frame_start_time_ms;
@@ -687,7 +686,7 @@ debug_infos: [..] string;
 
 PrintDev :: (fmt: string, args: .. Any) #expand {
     s := tprint(fmt, ..args);
-    array_add(*debug_infos, s); // can we use temporary allocator for dynamic arrays?
+    array_add(*debug_infos, s);
 } @PrintLike
 
 ll :: (fmt: string, args: .. Any) #expand {

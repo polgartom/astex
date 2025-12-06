@@ -994,11 +994,13 @@ save_buffer :: (using buffer: *Buffer) -> bool {
         config_path := get_editor_config_path();
         if file_exists(config_path) && platform_path_equals(config_path, filepath) {
             load_global_config();
+            reset_keymaps(*keymap_set);
             init_fonts();
         }
         config_path = get_project_config_path();
         if file_exists(config_path) && platform_path_equals(config_path, filepath) {
             load_project_config();
+            reset_keymaps(*keymap_set);
         }
     }
 

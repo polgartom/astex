@@ -267,16 +267,17 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
         mx, my := get_mouse_pointer_position(right_handed=true);
         if !is_point_in_rect(scrollbar_area, Vector2.{xx mx, xx my}) { // @Hacky
             if mouse_down {
-                active_editor = editor;
-                
-                mx, my, ok := get_mouse_pointer_position(right_handed=false);
-                pos := byte_pos_from_mouse_xy(editor, editor.active_buffer, mx, my);
-                if pos != -1 {
-                    set_cursor_pos(editor.active_buffer, *editor.cursor, pos, horizontal=true, with_selection=!vk_shift_down);
+                if mouse_dbl_clicked {
+                    SelectSimilarCharacters();
+                } else {
+                    active_editor = editor;
+                    
+                    mx, my, ok := get_mouse_pointer_position(right_handed=false);
+                    pos := byte_pos_from_mouse_xy(editor, editor.active_buffer, mx, my);
+                    if pos != -1 {
+                        set_cursor_pos(editor.active_buffer, *editor.cursor, pos, horizontal=true, with_selection=!vk_shift_down);
+                    }
                 }
-            } else if mouse_dbl_clicked {
-                // @Incomplete: Do this with no double click but click+click and we don't wait the 2. mouse release
-                SelectSimilarCharacters();
             } else if mouse_scrolled_on_frame == .up {
                 if vk_ctrl_down {
                     font_size += 1;

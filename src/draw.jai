@@ -1052,10 +1052,9 @@ draw_command_browser :: () {
             editor := get_bottom_editor();
             for *c: cmd.buffer.cursor_backup    reset_cursor(c);
             change_active_buffer(editor, cmd.buffer);
-            editor.left_offset = 0;
-            editor.top_offset = 0;
             assert(editor.cursor.pos <= cmd.buffer.count);
             assert(editor.cursor.sel <= cmd.buffer.count);
+            scroll_to_cursor(editor, editor.cursor, animation_duration=0);
             
             editor.visible = true;
             

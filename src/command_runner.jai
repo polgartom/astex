@@ -48,10 +48,12 @@ command_runner_update :: () {
         insert_text_at_raw(buffer, buffer.count, output_err);
         rescan_line_ends(buffer);
         
-        editor := get_bottom_editor();
-        set_cursor_pos(buffer, *buffer.cursor_backup[2], buffer.count, horizontal=true);
-        if editor.active_buffer == buffer {
-            editor.cursor = buffer.cursor_backup[2];
+        if output.count + output_err.count > 0 {
+            editor := get_bottom_editor();
+            set_cursor_pos(buffer, *buffer.cursor_backup[2], buffer.count, horizontal=true);
+            if editor.active_buffer == buffer {
+                editor.cursor = buffer.cursor_backup[2];
+            }
         }
         
         free_string(*output);

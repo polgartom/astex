@@ -102,6 +102,8 @@ _draw_file_browser :: () {
     for items {
         if !search_chunk || platform_path_contains(it.short_name, search_chunk) {
             opt := array_add2(*options);
+            opt.priority = 0;
+            
             memmove(*opt.ref, *it, size_of(File_Visit_Info));
             if it.is_directory opt.priority += items.count+1;
             

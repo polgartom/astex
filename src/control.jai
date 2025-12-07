@@ -236,6 +236,8 @@ MoveTabToLeft :: () {
     
     editor.tabs[prev_index] = buffer;
     editor.tabs[index] = tab_on_the_left;
+    
+    editor.tabs_force_offset_check = true;
 }
 
 MoveTabToRight :: () {
@@ -250,6 +252,8 @@ MoveTabToRight :: () {
     
     editor.tabs[next_index] = buffer;
     editor.tabs[index] = tab_on_the_right;
+    
+    editor.tabs_force_offset_check = true;
 }
 
 SaveAs :: () {

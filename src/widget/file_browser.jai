@@ -101,7 +101,7 @@ _draw_file_browser :: () {
     
     for items {
         if !search_chunk || platform_path_contains(it.short_name, search_chunk) {
-            opt := array_add(*options);
+            opt := array_add2(*options);
             memmove(*opt.ref, *it, size_of(File_Visit_Info));
             if it.is_directory opt.priority += items.count+1;
             
@@ -173,7 +173,7 @@ file_browser_scan :: () {
             return;
         }
 
-        new_item := array_add(*browser.items);
+        new_item := array_add2(*browser.items);
 
         // Replace the temporary allocated strings
         _short_name := advance(info.full_name, file_browser.current_dir.count);

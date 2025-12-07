@@ -9,7 +9,7 @@ open_command_browser :: () {
 
     array_reset_keeping_memory(*options);
     for * cmd: editor_commands {
-        opt := array_add(*options);
+        opt := array_add2(*options);
         
         name := cmd.name;
         if cmd.custom_command then name = tprint("[Command] %", cmd.name);

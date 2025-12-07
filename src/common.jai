@@ -18,6 +18,30 @@ advance :: (arr: [] $T, steps := 1) -> [] T {
     return r;
 }
 
+array_add2 :: (array: *[..] $T) -> *T {
+	if array.count >= array.allocated {
+        reserve := max(8, 2 * array.count);
+        array_reserve(cast(*Resizable_Array) array, reserve, size_of(T));
+        
+        for index: array.count .. array.allocated {
+            result := *array.data[index];
+            log("Initialize: % ; [%] ; allocated: %\n", T, result, array.allocated - array.count);
+            
+            ini :: initializer_of(T);
+            #if ini {
+                ini(result);
+            } else {
+                memset(result, 0, size_of(T));
+            }            
+        }
+	}
+
+    result := *array.data[array.count];
+
+    array.count += 1;
+    return result;
+}
+
 //////////////////////////
 // String
 
@@ -36,27 +60,14 @@ modify_string :: (target: *string, new_value: string) {
     target.* = copy_string(new_value);
 }
 
-//  @Cleanup: Naming
-find_index_from_right_until_not :: (s: string, byte: u8, start_index: s64 = 0) -> s64  #no_abc {
-    assert(start_index > -1 && start_index < s.count);
-
-    cursor := start_index;
-    while cursor >= 0 {
-        if s[cursor] != byte return cursor;
-        cursor -= 1;
-    }
-
-    return -1;
-}
-
-//  @Cleanup: Naming
+// @Cleanup: Remove it
 find_index_from_left_until_not :: (s: string, byte: u8, start_index: s64 = 0) -> s64  #no_abc {
     assert(start_index > -1);
 
     cursor := start_index;
     while cursor < s.count {
         if s[cursor] != byte return cursor;
-        cursor += 1;
+        cursor += 1 + trailingBytesForUTF8[s[cursor]];
     }
 
     return -1;
@@ -246,6 +257,32 @@ key_to_user_friendly_string :: (s: string, $camelcase := false) -> string {
     return builder_to_string(*b, do_reset=true);
 }
 
+//////////////////////////
+// Reusable String
+
+modify_rstring :: (using rstr: *Reusable_String, s: string) {
+    if allocated < s.count {
+        kacsa := allocated;
+        if data free(data);
+        
+        allocated = Align(s.count, 32);
+        data = alloc(allocated);
+        // log("Alloc: % -> %\n", kacsa, allocated);
+    }
+    assert(data != null);
+    
+    memcpy(data, s.data, s.count);
+    count = s.count;
+}
+
+Reusable_String :: struct {
+    str: string;
+    allocated: s64;
+    
+    #overlay (str.data)  data: *u8;
+    #overlay (str.count) count: s64;
+}
+
 /////////////////////
 // File utility
 
@@ -422,6 +459,11 @@ MultiSample_Measurement :: struct {
     SAMPLE_COUNT :: 64;
     index: u32;
     samples: [SAMPLE_COUNT] float64;
+}
+
+
+Align :: inline (n: $T, $$ PAGE_SIZE: s64) -> T {
+    return (n + PAGE_SIZE-1) & ~(PAGE_SIZE-1);
 }
 
 ////////////////////////////////

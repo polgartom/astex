@@ -27,7 +27,7 @@ open_buffer_browser :: () {
             title = b.name;
         }
 
-        opt := array_add(*options);
+        opt := array_add2(*options);
         opt.ref = b;
         modify_string(*opt.label, title);
         
@@ -38,7 +38,6 @@ open_buffer_browser :: () {
 
     switch_editor_mode(.WIDGET);
     active_widget = Buffer_Browser;
-
 }
 
 update_visible_options :: (using browser: *Buffer_Browser) {

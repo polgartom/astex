@@ -108,3 +108,14 @@ SelectSimilarCharacters           K:\Programming\asterisk\.\src\control.jai:1260
 draw_editor                       K:\Programming\asterisk\.\src\draw.jai:226
 draw_frame                        K:\Programming\asterisk\.\src\draw.jai:36
 main                              K:\Programming\asterisk\.\src\main.jai:289
+
+------------------------------------------------
+
+The program crashed because of an access violation reading location 0x14.
+
+Printing the stack trace:
+handle_exception                  C:\jai\modules\Runtime_Support_Crash_Handler.jai:356
+... (skipping OS-internal procedures)
+rescan_line_ends                  C:\jai\modules\String\module.jai:1307
+command_runner_update             K:\Programming\astex\src\command_runner.jai:49
+main                              K:\Programming\astex\src\main.jai:257

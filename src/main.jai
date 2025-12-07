@@ -327,7 +327,7 @@ main :: () {
             }
         }
                 
-        array_reset(*debug_infos);
+        array_reset_keeping_memory(*debug_infos);
         reset_temporary_storage();
         
         if to_float64_seconds(current_time_monotonic() - frame_time) <= QUICK_FRAME_DT {
@@ -537,10 +537,6 @@ zero_memory :: inline (ptr: *void, size: s64) {
     memset(ptr, 0, size);
 }
 
-Align :: inline (n: $T, $$ PAGE_SIZE: s64) -> T {
-    return (n + PAGE_SIZE-1) & ~(PAGE_SIZE-1);
-}
-
 c_malloc  :: (size: u64) -> *void                               #foreign crt "malloc";
 c_free    :: (memory: *void)                                    #foreign crt "free";
 c_realloc :: (memory: *void, size: u64) -> *void                #foreign crt "realloc";
@@ -669,7 +665,7 @@ UI: struct {
 };
 
 maybe_set_hot :: (id: Ui_Id, rect: Rect) -> bool {
-    mx, my := get_mouse_pointer_position(right_handed=true);
+    mx, my := get_mouse_pointer_position(right_handed=true); // @Speed
     if !is_point_in_rect(rect, Vector2.{xx mx, xx my}) return false;
     
     UI.hot = id;
@@ -682,11 +678,18 @@ maybe_set_hot :: (id: Ui_Id, rect: Rect) -> bool {
 show_debug_info := DEBUG;
 show_profiler := false;
 show_font_debug_info := false;
-debug_infos: [..] string;
+debug_infos: [..] Reusable_String;
 
 PrintDev :: (fmt: string, args: .. Any) #expand {
+    // Not recommented to use the temporary allocated string for the debug info array, because
+    // it may cause problems at some cases where we restore the temporary allocator's mark end of a
+    // procedure, like auto_release_temp(). So we use our "reusable" string to prevent bunch of
+    // allocation / deallocation per frame.
+    
     s := tprint(fmt, ..args);
-    array_add(*debug_infos, s);
+    
+    rstr := array_add2(*debug_infos);
+    modify_rstring(rstr, s);
 } @PrintLike
 
 ll :: (fmt: string, args: .. Any) #expand {

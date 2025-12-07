@@ -1426,7 +1426,7 @@ draw_global_debug_info :: (r: Rect) {
     height := 0.0;
     
     for debug_infos {
-        s := trim(it, "\n");
+        s := trim(it.str, "\n");
         width := measure_text_width(font, s);
         if width > max_width then max_width = width;
         height += line_height;
@@ -1442,7 +1442,7 @@ draw_global_debug_info :: (r: Rect) {
 
     Simp.set_shader_for_text();
     for debug_infos {
-        s := trim(it, "\n");
+        s := trim(it.str, "\n");
 
         w := Simp.prepare_text(font, s);
         baseline += line_height;

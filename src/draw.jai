@@ -1107,6 +1107,7 @@ draw_buffer_browser :: () {
     linp_theme := List_Input.DEFAULT_THEME;
     linp_theme.border_color = #run hex_to_vec4(0x30_25_0a_ff);
     linp_theme.current_item_bg_color = #run hex_to_vec4(0x30_25_0a_ff);
+    log("options: %\n", options);
     linp := list_input(list_rect, buffer_browser.bb_list_input_ui_id, options, font, theme=linp_theme);
     
     if tinp.typed update_visible_options(*buffer_browser);
@@ -1354,8 +1355,6 @@ draw_find_text_dialog :: () {
 
         Simp.immediate_quad(left, bottom + (ch-ch*0.1)+.001, left + width, bottom - (ch*.5-(ch*0.2)), color);
     }
-
-
 }
 
 draw_goto_line_dialog :: () {
@@ -1489,11 +1488,12 @@ draw_font_metrics_debug :: (editor: *Editor) {
 Text_Style :: struct {
     text: string;
     colors: [..] Color;
-    default_colorv4: Vector4 = #run map_default_color_to_vec4(.TEXT_DEFAULT);
+    default_colorv4: Vector4;
     font_override: *Simp.Dynamic_Font;
     x_offset: s64 = 0;
     y_offset: s64 = 0;
 }
+// kacsa
 
 draw_text :: (x: s64, y: s64, ts: Text_Style) -> width: s64 {
     font := r_font;

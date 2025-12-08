@@ -29,6 +29,8 @@ open_buffer_browser :: () {
 
         opt := array_add2(*options);
         opt.ref = b;
+        opt.priority = 0;
+        opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
         modify_string(*opt.label, title);
         
         if !b.readonly opt.priority = 1; // prioritize the non-scratch buffers
@@ -58,6 +60,7 @@ update_visible_options :: (using browser: *Buffer_Browser) {
             if !found continue;
         }
 
+        // log("opt: %\n", opt);
         array_add(*visible_options, opt);
     }
     

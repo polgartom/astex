@@ -25,7 +25,7 @@ array_add2 :: (array: *[..] $T) -> *T {
         
         for index: array.count .. array.allocated {
             result := *array.data[index];
-            log("Initialize: % ; [%] ; allocated: %\n", T, result, array.allocated - array.count);
+            // log("Initialize: % ; [%] ; allocated: %\n", T, result, array.allocated - array.count);
             
             ini :: initializer_of(T);
             #if ini {

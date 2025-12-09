@@ -994,7 +994,6 @@ save_buffer :: (using buffer: *Buffer) -> bool {
         // Also we should put this in file watcher procedure
         config_path := get_editor_config_path();
         if file_exists(config_path) && platform_path_equals(config_path, filepath) {
-            reset_keymaps(*keymap_set);
             load_global_config();
             init_fonts();
         }

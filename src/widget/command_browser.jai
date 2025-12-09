@@ -10,6 +10,7 @@ open_command_browser :: () {
     array_reset_keeping_memory(*options);
     for * cmd: editor_commands {
         opt := array_add2(*options);
+        opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
         
         name := cmd.name;
         if cmd.custom_command then name = tprint("[Command] %", cmd.name);

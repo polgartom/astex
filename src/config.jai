@@ -146,6 +146,8 @@ parse_config :: (name: string, filename: string, file_data: string) -> bool {
 }
 
 parse_keymap_section :: (file_data: string) {
+    reset_keymaps(*keymap_set);
+
     keymap_data, found := get_section_as_string("keymap", file_data);
     if !found {
         keymap_data, found = get_section_as_string("keymap", DEFAULT_CONFIG_FILE_DATA);

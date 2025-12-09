@@ -211,12 +211,12 @@ main :: () {
                     mouse_down_last_time_ms = frame_start_time_ms;
                     
                     // @Todo We should account for cases where the cursor moves beyond a certain range, as this should "invalidate" mouse clicks.
-                    // Maybe it's double click if we clicked on the previous frame and the interval between clicks was less than 250.0ms. 
+                    // @Todo Check the distance between the initial mouse-down position and the current mouse-down position during a double-click.
+                    
+                    // Maybe it's double click if we clicked on the previous frame and the interval between clicks was less than 250.0ms.
                     if (frame_start_time_ms - mouse_clicked_last_time_ms) <= 300.0 { // Windows default is 500 ms, many games use 250–350 ms.
-                        if frame_start_time_ms - mouse_dbl_clicked_last_time_ms > 300.0 { // mouse double click cooldown
-                            mouse_dbl_clicked = true;
-                            mouse_dbl_clicked_last_time_ms = frame_start_time_ms;
-                        }
+                        mouse_dbl_clicked = true;
+                        mouse_dbl_clicked_last_time_ms = frame_start_time_ms;
                     }
                 } else {                                    
                     if (frame_start_time_ms - mouse_down_last_time_ms) <= 200.0 { // Max allowed delay between press and release → 150–250 ms (Most systems use around 200 ms.)

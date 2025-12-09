@@ -103,6 +103,7 @@ _draw_file_browser :: () {
         if !search_chunk || platform_path_contains(it.short_name, search_chunk) {
             opt := array_add2(*options);
             opt.priority = 0;
+            opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
             
             memmove(*opt.ref, *it, size_of(File_Visit_Info));
             if it.is_directory opt.priority += items.count+1;

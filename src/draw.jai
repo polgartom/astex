@@ -264,12 +264,19 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
             close_current_widget();
         }
             
-        mx, my := get_mouse_pointer_position(right_handed=true);
-        if !is_point_in_rect(scrollbar_area, Vector2.{xx mx, xx my}) { // @Hacky
+        if !mouse_point_within_rect(scrollbar_area) { // @Hacky
             if mouse_down {
                 if mouse_dbl_clicked {
                     SelectSimilarCharacters();
                 } else {
+                    // @Todo Handle cases where a double-click is followed by cursor movement.
+                    // VSCode behaves like this: after a double-click, a character or word becomes selected.
+                    // While the mouse is held down and moved inside that selected range, nothing happens
+                    // because the range is already selected. When the mouse moves outside the range,
+                    // the selection expands. We need a similar approach, but currently we don’t perform
+                    // any selection during mouse-down unless Shift is pressed. We should decide how
+                    // we want to handle this.
+                    
                     active_editor = editor;
                     
                     mx, my, ok := get_mouse_pointer_position(right_handed=false);
@@ -439,9 +446,20 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
                 
                 grab_point := editor.scrollbar_grabbed_y;
                 if scroll_zone_height > 0 {
-                    editor.top_offset = (area.h + area.y - cast(float, my) - grab_point) / (area.h) * total_height;
-                    editor.top_offset = max(0.0, editor.top_offset);
-                    editor.top_offset = min(max_scroll, editor.top_offset);
+                    target := (area.h + area.y - cast(float, my) - grab_point) / (area.h) * total_height;
+                    target = max(0.0, target);
+                    target = min(max_scroll, target);
+                                        
+                    // The result is a fcking nice scrolling effect.
+                    anim: Anim;
+                    anim.active = true;
+                    anim.start  = editor.top_offset;
+                    anim.target = target;
+                    anim.duration = 0.05;
+                    anim.started_at = frame_time64;
+                    editor.y_scroll_anim = anim;
+                    
+                    redraw_requested = true;
                 }
             }
         }

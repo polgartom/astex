@@ -996,11 +996,13 @@ save_buffer :: (using buffer: *Buffer) -> bool {
         if file_exists(config_path) && platform_path_equals(config_path, filepath) {
             load_global_config();
             init_fonts();
+            notify_user("Editor configuration reloaded!", .INFO);
         }
         config_path = get_project_config_path();
         if file_exists(config_path) && platform_path_equals(config_path, filepath) {
             // reset_keymaps(*keymap_set);
             load_project_config();
+            notify_user("Project configuration reloaded!", .INFO);
         }
     }
 

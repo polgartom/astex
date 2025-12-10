@@ -426,6 +426,14 @@ MoveLeftWord :: () {
         }
     }
     
+    if pos != 0 {
+        msg := tprint("Invalid code path detected in %() ln: %", #procedure_name(), #line);
+        notify_user(msg, .ERROR, 10.0);
+        log_error(msg);
+        return;
+    }
+    
+    set_cursor_pos(buffer, cursor, 0, horizontal=true);
 }
 
 MoveLeftWordSlow :: inline () {

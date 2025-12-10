@@ -1,4 +1,4 @@
-push_user_notification :: (text: string, level: User_Notification.Level, duration := 0.5) -> *User_Notification {
+notify_user  :: (text: string, level: User_Notification.Level, duration := 3.5) -> *User_Notification {
     it := array_add(*user_notifications);
     it.text = copy_string(text);
     it.level = level;
@@ -35,10 +35,21 @@ user_notifications_update :: () {
 
 get_bg_color :: (level: User_Notification.Level) -> Vector4 {
     if level == {
-        case .INFO;    return #run hex_to_vec4(0x4FC3F7ff);
-        case .SUCCESS; return #run hex_to_vec4(0x43A047ff);
-        case .WARNING; return #run hex_to_vec4(0xFB8C00ff);
-        case .ERROR;   return #run hex_to_vec4(0xB00020ff);
+        case .INFO;    return #run hex_to_vec4(0x1976D2ff);
+        case .SUCCESS; return #run hex_to_vec4(0x689F38ff);
+        case .WARNING; return #run hex_to_vec4(0xFFA000ff);
+        case .ERROR;   return #run hex_to_vec4(0xD32F2Fff);
+    }
+    
+    return map_color_to_vec4(.TEXT_DEFAULT);
+}
+
+get_border_color :: (level: User_Notification.Level) -> Vector4 {
+    if level == {
+        case .INFO;    return #run hex_to_vec4(0x42A5F5ff);
+        case .SUCCESS; return #run hex_to_vec4(0x9CCC65ff);
+        case .WARNING; return #run hex_to_vec4(0xFFCA28ff);
+        case .ERROR;   return #run hex_to_vec4(0xEF5350ff);
     }
     
     return map_color_to_vec4(.TEXT_DEFAULT);
@@ -49,7 +60,7 @@ get_fg_color :: (level: User_Notification.Level) -> Vector4 {
         case .INFO;    return #run hex_to_vec4(0x00_00_00_00);
         case .SUCCESS; return #run hex_to_vec4(0x00_00_00_00);
         case .WARNING; return #run hex_to_vec4(0x00_00_00_00);
-        case .ERROR;   return #run hex_to_vec4(0xFF_FF_FF_FF);
+        case .ERROR;   return #run hex_to_vec4(0x00_00_00_00);
     }
     
     return map_color_to_vec4(.BACKGROUND2);

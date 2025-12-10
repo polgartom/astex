@@ -997,29 +997,42 @@ draw_selection :: (editor: *Editor, buffer: *Buffer, r: Rect) {
 }
 
 draw_user_notifications :: () {
-    WIDTH :: 300;
+    min_width := 300 * dpi_scale;
     font := r_font_tiny;
     
-    x := window_width - (WIDTH + 25);
-    y := cast(s64)get_footer_height() + 25;
+    pad := 25 * dpi_scale;
+    pad_sm := 10 * dpi_scale;
+    
+    y := cast(s64)get_footer_height() + pad;
     
     for < * user_notifications {
-        width := WIDTH;
-        height := 50;
+        width := min_width;
+        height := 50*dpi_scale; // @Temporary
         
-        rect := make_rect(x, y, width, height);
-        fg_color := v4(1,1,1,1);//get_fg_color(it.level);
-        fg_color.w = 0.8;
+        text_width := cast(float32)measure_text_width(font, it.text);
+        if text_width >= width {
+            width = text_width + pad;
+        }
+        
+        x := window_width - (width + pad);
+        
+        rect := make_rect(x, y, cast(float32)width, height);
+        fg_color := get_fg_color(it.level);
+        fg_color.w = 1.0;
         bg_color := get_bg_color(it.level);
-        bg_color.w = 0.8;
+        bg_color.w = 0.85;
+        border_color := get_border_color(it.level);
+        border_thickness := 2.5 * dpi_scale;
         
-        t := (frame_time64 - it.started_at) / it.duration;
-        t = clamp(t, 0.0, 1.0);
-        cast(float)((0.8) * t * t * (3.0 - 2.0 * t)); // smoothstep
-        bg_color.w *= xx lerp(1.0, 0.0, t);
-        fg_color.w *= xx lerp(1.0, 0.0, t);
-        
-        it.hovered = false;
+        t := (it.started_at + it.duration) - frame_time64;
+        if t < 0.15 { // Start hiding it in the last 150ms
+            t = t / 0.15;
+            t = clamp(t, 0.0, 1.0);
+            v := cast(float32)lerp(0.0, 1.0, t);
+            bg_color.w   *= v;
+            fg_color.w   *= v;
+            border_color.w *= v;
+        }
         
         maybe_set_hot(.user_notifications, rect);
         if (UI.hot_last_frame == .user_notifications && !mouse_grabbed_ui_id) && mouse_point_within_rect(rect) {
@@ -1033,12 +1046,12 @@ draw_user_notifications :: () {
             }
         }
         
-        draw_quad_with_radius(rect, bg_color, radius=r_rect_radius, border_thickness=1.5, v4(1,1,1,.2));
+        draw_quad_with_radius(rect, bg_color, r_rect_radius, border_thickness, border_color);
         
         baseline := cast(s64)(y + default_text_baseline(font, cast(float)height, .center));
-        draw_text(x+10, baseline, it.text, font, fg_color);
+        draw_text(cast(s64)(x + pad_sm), baseline, it.text, font, fg_color);
         
-        y += height + 10;
+        y += height + pad_sm;
     }
 }
 

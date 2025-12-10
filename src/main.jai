@@ -100,10 +100,10 @@ main :: () {
         }
         
         // if !_notification_debug {
-            // push_user_notification("Warning: This is a test!",        .WARNING, 4.0);
-            // push_user_notification("Error: Something is went wrong!", .ERROR, 8.0);
-            // push_user_notification("You've done it", .SUCCESS, 2.5);
-            // push_user_notification("I have some info to you", .INFO, .5);
+            // notify_user("Warning: This is a test!",        .WARNING, 4.0);
+            // notify_user("Error: Something is went wrong!", .ERROR, 8.0);
+            // notify_user("You've done it", .SUCCESS, 2.5);
+            // notify_user("I have some info to you", .INFO, 6.21);
             // _notification_debug = true;
         // }
         
@@ -689,7 +689,7 @@ maybe_set_hot :: (id: Ui_Id, rect: Rect) -> bool {
 ////////////////////////////////
 // Debug
 
-show_debug_info := DEBUG;
+show_debug_info := false;
 show_profiler := false;
 show_font_debug_info := false;
 debug_infos: [..] string;

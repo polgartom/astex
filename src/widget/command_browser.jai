@@ -1,6 +1,8 @@
 open_command_browser :: () {
     using command_browser;
 
+    reset_widget_allocator(*widget_allocator);
+
     if self_text_input {
         clear_text(self_text_input);
     } else {
@@ -15,8 +17,8 @@ open_command_browser :: () {
         name := cmd.name;
         if cmd.custom_command then name = tprint("[Command] %", cmd.name);
         
-        modify_string(*opt.label, name);
-        modify_string(*opt.label_for_search, replace(name, " ", "",, temp));
+        opt.label = copy_string(name,, allocator=wallocator);
+        opt.label_for_search = copy_string(trim(name),, allocator=wallocator);
         opt.ref = cmd;
     }
 
@@ -34,4 +36,7 @@ Command_Browser :: struct {
     self_text_input: *Text_Input;
 
     options: [..] List_Input.Option(*Editor_Command);
+    
+    widget_allocator: Widget_Allocator;
+    #overlay(widget_allocator.allocator) wallocator: Allocator;
 }

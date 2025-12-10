@@ -277,7 +277,7 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
                     // any selection during mouse-down unless Shift is pressed. We should decide how
                     // we want to handle this.
                     
-                    log("> %\n", frame_start_time_ms - mouse_dbl_clicked_last_time_ms);
+                    // log("> %\n", frame_start_time_ms - mouse_dbl_clicked_last_time_ms);
                     
                     active_editor = editor;
                     

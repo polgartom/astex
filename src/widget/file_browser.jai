@@ -4,19 +4,25 @@ open_file_browser :: () {
     if !fb_text_input {
         fb_text_input = create_text_input(FILE_BROWSER_TEXT_INPUT_UI_ID);
     }
+        
+    // if current_dir {
+        // // Reset the input's text to a properly formatted path so we can list all files
+        // // in the current directory. For example, the input might be entered as:
+        // // "K:\Programming\asterisk\src\sour". In this case, we searched for "source.jai",
+        // // but the path was only partially filled. Since we did find the file, the current
+        // // directory is actually ".../src". We need to restore the correct format by
+        // // removing the extra "sour" part and appending a separator ("/") at the end,
+        // // resulting in: "K:\Programming\asterisk\src\".
+        // insert_directory_to_text_input(current_dir);
+        // file_browser_scan();
+    // } else {
+        // file_browser_change_dir(get_workdir());
+    // }
     
-    if current_dir {
-        // Reset the input's text to a properly formatted path so we can list all files
-        // in the current directory. For example, the input might be entered as:
-        // "K:\Programming\asterisk\src\sour". In this case, we searched for "source.jai",
-        // but the path was only partially filled. Since we did find the file, the current
-        // directory is actually ".../src". We need to restore the correct format by
-        // removing the extra "sour" part and appending a separator ("/") at the end,
-        // resulting in: "K:\Programming\asterisk\src\".
-        insert_directory_to_text_input(current_dir);
-        file_browser_scan();
-    } else {
-        file_browser_change_dir(get_workdir());
+    {
+        // We reset or init the widget_allocator in the file_browser_change_dir()
+        dir := ifx current_dir then current_dir else get_workdir();
+        file_browser_change_dir(dir);
     }
     
     switch_editor_mode(.WIDGET);
@@ -89,8 +95,7 @@ _draw_file_browser :: () {
 
     path := path_strip_filename(tinp.text);
     if !platform_path_equals(path, current_dir) {
-        modify_string(*current_dir, path);
-        file_browser_scan();
+        file_browser_change_dir(path);
     }
 
     chunks := split(tinp.text, "/",, allocator=temp);
@@ -111,16 +116,16 @@ _draw_file_browser :: () {
             opt.label_prefix_styled.x_offset = xx (2 * dpi_scale);
             if it.is_directory {
                 opt.label_prefix_styled.font_override = r_font_icons_solid;
-                modify_string(*opt.label_prefix, FOLDER_ICON);
+                opt.label_prefix = copy_string(FOLDER_ICON,, wallocator);
                 opt.label_prefix_styled.default_colorv4 = #run hex_to_vec4(0xff_ff_ff_8a);
                 opt.label_prefix_styled.font_override = r_font_icons_solid;
             } else {
-                modify_string(*opt.label_prefix, FILE_ICON);
+                opt.label_prefix = copy_string(FILE_ICON,, wallocator);
                 opt.label_prefix_styled.default_colorv4 = #run hex_to_vec4(0xff_ff_ff_8a);
                 opt.label_prefix_styled.font_override = r_font_icons;
             }
             
-            modify_string(*opt.label, it.short_name);
+            opt.label = copy_string(it.short_name,, wallocator);
             opt.label_styled.x_offset = xx (prefix_width + (8 * dpi_scale));
         }
     }
@@ -167,48 +172,6 @@ _draw_file_browser :: () {
     
 }
 
-file_browser_scan :: () {
-    using file_browser;
-
-    array_reset_keeping_memory(*items);
-
-    visitor :: (info: *File_Visit_Info, browser: *File_Browser) {
-        if should_ignore_path(info.full_name) {
-            return;
-        }
-
-        new_item := array_add(*browser.items);
-
-        // Replace the temporary allocated strings
-        _short_name := advance(info.full_name, file_browser.current_dir.count);
-        assert(!!_short_name);
-        if _short_name[0] == #char "/" then advance(*_short_name, 1);
-
-        fullname := info.full_name;
-        chunks := split(info.full_name, "/",, allocator=temp);
-        for chunks if !it remove it;
-        fullname = join(..chunks, separator="/",, temp);
-
-        //log("# %\n", fullname);
-
-        modify_string(*new_item.short_name, _short_name);
-        modify_string(*new_item.full_name, fullname);
-        path_unify_sepa(new_item.short_name);
-        path_unify_sepa(new_item.full_name);
-
-        using new_item;
-        modification_time      = info.modification_time;
-        had_error              = info.had_error;
-        is_symlink             = info.is_symlink;
-        is_directory           = info.is_directory;
-        descend_into_directory = info.descend_into_directory;        
-    }
-
-    visit_files(current_dir, recursive=false, *file_browser, visitor, visit_directories=true, follow_directory_symlinks=false);
-
-    scan_requested = false;
-}
-
 #scope_file
 
 insert_directory_to_text_input :: (dir: string) {
@@ -222,8 +185,54 @@ insert_directory_to_text_input :: (dir: string) {
 file_browser_change_dir :: (dir: string) {
     using file_browser;
     
+    if widget_allocator.inited {
+        used, reserved, commited := get_widget_allocator_allocation_info(*widget_allocator);
+        // ll("Allocator -> used: % ; commited: % ; reserved: %\n", used, commited, reserved);
+    }
+    
+    reset_widget_allocator(*widget_allocator);
+    
     insert_directory_to_text_input(dir);
     modify_string(*current_dir, fb_text_input.text);
+    
+    file_browser_scan :: () {
+        using file_browser;
+    
+        array_reset_keeping_memory(*items);
+    
+        visitor :: (info: *File_Visit_Info, browser: *File_Browser) {
+            if should_ignore_path(info.full_name) {
+                return;
+            }
+    
+            new_item := array_add(*browser.items);
+    
+            // Replace the temporary allocated strings
+            _short_name := advance(info.full_name, file_browser.current_dir.count);
+            assert(!!_short_name);
+            if _short_name[0] == #char "/" then advance(*_short_name, 1);
+    
+            fullname := info.full_name;
+            chunks := split(info.full_name, "/",, allocator=temp);
+            for chunks if !it remove it;
+            fullname = join(..chunks, separator="/",, allocator=temp);
+    
+            new_item.short_name = copy_string(_short_name,, allocator=file_browser.wallocator);
+            new_item.full_name  = copy_string(fullname,, allocator=file_browser.wallocator);
+            path_unify_sepa(new_item.short_name);
+            path_unify_sepa(new_item.full_name);
+    
+            using new_item;
+            modification_time      = info.modification_time;
+            had_error              = info.had_error;
+            is_symlink             = info.is_symlink;
+            is_directory           = info.is_directory;
+            descend_into_directory = info.descend_into_directory;        
+        }
+    
+        visit_files(current_dir, recursive=false, *file_browser, visitor, visit_directories=true, follow_directory_symlinks=false);
+    }
+    
     file_browser_scan();
 }
 
@@ -239,7 +248,9 @@ File_Browser :: struct {
     current_dir: string;
     items: [..] File_Visit_Info;
     options: [..] List_Input.Option(File_Visit_Info);
-    scan_requested := true;
     
     open_animation: Anim;
+    
+    widget_allocator: Widget_Allocator;
+    #overlay(widget_allocator.allocator) wallocator: Allocator;
 }

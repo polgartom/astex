@@ -134,6 +134,33 @@ Dialog_Option :: enum_flags u32 {
     ICONSTOP ::                 ICONHAND;
 }
 
+reset_widget_allocator :: (using wa: *Widget_Allocator, reserve := Widget_Allocator.DEFAULT_RESERVE) {
+    if !wa.inited {
+        init(*wa.pool, reserve = cast(s64)reserve);
+        wa.allocator.proc = flat_pool_allocator_proc;
+        wa.allocator.data = *pool;
+        wa.inited = true;
+    }
+    
+    reset(*wa.pool);
+}
+
+get_widget_allocator_allocation_info :: (using wa: *Widget_Allocator) -> (used: s64, reserved: s64, commited: s64) {
+    used     := pool.current_point - pool.memory_base;
+    reserved := pool.address_limit - pool.memory_base;
+    commited := pool.first_uncommitted_page - pool.memory_base;
+        
+    return used, reserved, commited;
+}
+
+Widget_Allocator :: struct {
+    pool: Flat_Pool;
+    allocator: Allocator;
+    inited: bool;
+    
+    DEFAULT_RESERVE :: #run Kilobyte(512);
+}
+
 #load "widget/label.jai";
 #load "widget/text_input.jai";
 #load "widget/list_input.jai";

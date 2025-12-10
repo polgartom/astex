@@ -1,6 +1,8 @@
 open_buffer_browser :: () {
     using buffer_browser;
 
+    reset_widget_allocator(*widget_allocator);
+
     if bb_text_input {
         select_all(bb_text_input);
     } else {
@@ -30,7 +32,8 @@ open_buffer_browser :: () {
         opt.ref = b;
         opt.priority = 0;
         opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
-        modify_string(*opt.label, title);
+        
+        opt.label = copy_string(title,, wallocator);
     }
 
     update_visible_options(*buffer_browser);
@@ -57,7 +60,6 @@ update_visible_options :: (using browser: *Buffer_Browser) {
             if !found continue;
         }
 
-        // log("opt: %\n", opt);
         array_add(*visible_options, opt);
     }
     
@@ -76,4 +78,7 @@ Buffer_Browser :: struct {
 
     bb_text_input: *Text_Input;
     bb_list_input_ui_id := BUFFER_BROWSER_UI_ID;
+    
+    widget_allocator: Widget_Allocator;
+    #overlay(widget_allocator.allocator) wallocator: Allocator;
 }

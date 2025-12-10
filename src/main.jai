@@ -746,11 +746,13 @@ MeasureScope :: (name: string) #expand {
 #import "Hash_Table";
 #import "Process";
 #import "Thread";
+#import "Flat_Pool";
 
 File      :: #import "File";
 Simp      :: #import "Simp";
 Clipboard :: #import "Clipboard";
 Hash      :: #import "Hash";
+
 
 #if OS == .WINDOWS {
     #import "Windows";

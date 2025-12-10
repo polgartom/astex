@@ -462,6 +462,20 @@ MultiSample_Measurement :: struct {
     samples: [SAMPLE_COUNT] float64;
 }
 
+//////////////////////////
+// Memory
+
+Kilobyte :: inline (amount: u64) -> u64 {
+    return amount * 1024;
+}
+
+Megabyte :: inline (amount: u64) -> u64 {
+    return amount * 1024 * 1024;
+}
+
+Gigabyte :: inline (amount: u64) -> u64 {
+    return amount * 1024 * 1024 * 1024;
+}
 
 Align :: inline (n: $T, $$ PAGE_SIZE: s64) -> T {
     return (n + PAGE_SIZE-1) & ~(PAGE_SIZE-1);

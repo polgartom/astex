@@ -21,33 +21,29 @@ execute_custom_command :: (using cmd: Editor_Command) {
     work.buffer = buffer;
     
     assert(!!workdir && !!exec);
-    modify_string(*work.command, exec);
-    modify_string(*work.workdir, workdir);
+    work.command = copy_string(exec);
+    work.workdir = copy_string(workdir);
         
     add_work(*thread_group, work);
 }
 
 command_runner_update :: () {
-    output: string;
-    output_err: string;
-
     if current_work {
         lock(*output_lock);
-        output = builder_to_string(*stdout, do_reset=true);
-        output_err = builder_to_string(*stderr, do_reset=true);
+        
+        output := builder_to_string(*stdout, do_reset=true);
+        output_err := builder_to_string(*stderr, do_reset=true);
         
         buffer := current_work.buffer;
         
         if current_work.done {
             current_work = null;
         }
-        
-        unlock(*output_lock);
-               
+                       
         insert_text_at_raw(buffer, buffer.count, output);
         insert_text_at_raw(buffer, buffer.count, output_err);
         rescan_line_ends(buffer);
-        
+                
         if output.count + output_err.count > 0 {
             editor := get_bottom_editor();
             set_cursor_pos(buffer, *buffer.cursor_backup[2], buffer.count, horizontal=true);
@@ -58,13 +54,18 @@ command_runner_update :: () {
         
         free_string(*output);
         free_string(*output_err);
+        
+        unlock(*output_lock);
     }
     
     works := get_completed_work(*thread_group);
     if works {
         for works {
             work := cast(*Custom_Command_Work) it;
+            // push_user_notification(tprint("% work is done!", work.command), .SUCCESS, 2.0);
+            
             free_string(*work.command);
+            free_string(*work.workdir);
             defer free(work);
             log("work: %\n", work.*);
         }

@@ -73,6 +73,8 @@ main :: () {
     if executable_args.showprofiler {
         show_profiler = true;
     }
+    
+    // _notification_debug := false;
 
     while !should_quit {
         if !redraw_requested && wait_os_event_before_redraw {
@@ -96,6 +98,14 @@ main :: () {
             
             push_measurement(*frametimes, frame_dt * 1000);
         }
+        
+        // if !_notification_debug {
+            // push_user_notification("Warning: This is a test!",        .WARNING, 4.0);
+            // push_user_notification("Error: Something is went wrong!", .ERROR, 8.0);
+            // push_user_notification("You've done it", .SUCCESS, 2.5);
+            // push_user_notification("I have some info to you", .INFO, .5);
+            // _notification_debug = true;
+        // }
         
         redraw_requested = false;
         cursor_icon_was_set_this_frame = false;
@@ -313,6 +323,8 @@ main :: () {
             }
 
         }
+
+        user_notifications_update();
 
         draw_frame();
         
@@ -657,6 +669,8 @@ Ui_Id :: enum s64 {
     editor_bottom;
     editor_bottom_scrollbar;
     editor_bottom_tabs;
+    
+    user_notifications;
 }
 
 UI: struct {
@@ -730,6 +744,7 @@ MeasureScope :: (name: string) #expand {
 #load "font.jai";
 #load "file_watcher.jai";
 #load "command_runner.jai";
+#load "user_notification.jai";
 
 #import "System";
 #import "Basic";

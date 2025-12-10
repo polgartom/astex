@@ -142,6 +142,8 @@ draw_frame :: () {
         draw_widgets();
     }
     
+    draw_user_notifications();
+    
     UI.hot_last_frame = UI.hot;
     
     if show_font_debug_info {
@@ -992,6 +994,54 @@ draw_selection :: (editor: *Editor, buffer: *Buffer, r: Rect) {
     }
 
     Simp.immediate_flush();
+}
+
+draw_user_notifications :: () {
+    // kacsa
+    
+    WIDTH :: 300;
+    font := r_font_tiny;
+    
+    x := window_width - (WIDTH + 25);
+    y := cast(s64)get_footer_height() + 25;
+    
+    for < * user_notifications {
+        width := WIDTH;
+        height := 50;
+        
+        rect := make_rect(x, y, width, height);
+        fg_color := v4(1,1,1,1);//get_fg_color(it.level);
+        fg_color.w = 0.8;
+        bg_color := get_bg_color(it.level);
+        bg_color.w = 0.8;
+        
+        t := (frame_time64 - it.started_at) / it.duration;
+        t = clamp(t, 0.0, 1.0);
+        cast(float)((0.8) * t * t * (3.0 - 2.0 * t)); // smoothstep
+        bg_color.w *= xx lerp(1.0, 0.0, t);
+        fg_color.w *= xx lerp(1.0, 0.0, t);
+        
+        it.hovered = false;
+        
+        maybe_set_hot(.user_notifications, rect);
+        if (UI.hot_last_frame == .user_notifications && !mouse_grabbed_ui_id) && mouse_point_within_rect(rect) {
+            it.hovered = true;
+            
+            fg_color.w = 1.0;
+            bg_color.w = 0.6;
+            
+            if mouse_clicked {
+                it.closed = true;
+            }
+        }
+        
+        draw_quad_with_radius(rect, bg_color, radius=r_rect_radius);
+        
+        baseline := cast(s64)(y + default_text_baseline(font, cast(float)height, .center));
+        draw_text(x+10, baseline, it.text, font, fg_color);
+        
+        y += height + 10;
+    }
 }
 
 draw_widgets :: () {

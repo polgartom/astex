@@ -30,7 +30,7 @@ open_buffer_browser :: () {
 
         opt := array_add(*options);
         opt.ref = b;
-        opt.priority = 0;
+        opt.priority = b.accessed_this_frame;
         opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
         
         opt.label = copy_string(title,, wallocator);

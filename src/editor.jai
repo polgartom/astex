@@ -1165,6 +1165,8 @@ change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
     editor.left_offset = 0.0;
     editor.top_offset  = 0.0;
     scroll_to_cursor(editor, editor.cursor, animation_duration=0);
+    
+    next_buffer.accessed_this_frame = frame;
 }
 
 change_active_editor :: (editor: *Editor, change_mode := true) { // @Cleanup
@@ -1884,6 +1886,7 @@ Buffer :: struct {
     filepath: string; @NeedsFree(free_string)
     modtime: float64;
     last_writetime: Apollo_Time;
+    accessed_this_frame: s64;
 
     quads_for_code_run: [..] Code_Font_Quad; @NeedsFree(array_reset)
 

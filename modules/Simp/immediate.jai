@@ -300,7 +300,7 @@ immediate_quad :: (x0: float, y0: float, x1: float, y1: float, color: Vector4) {
     put_vertex(*v[5], .{x0, y1}, color,  0, 1);
 }
 
-immediate_quad_with_radius :: (x0: float, y0: float, x1: float, y1: float, color: Vector4, radius: float) {
+immediate_quad_with_radius :: (x0: float, y0: float, x1: float, y1: float, color: Vector4, radius: float, border_thickness := 0.0, border_color := Vector4.{1,1,1,1}) {
     put_vertex :: inline (using vertex: *Immediate_Vertex, p: Vector2, bounds: Vector4, color: Vector4, u: float, v: float) {
         position.xy  = p;
         position.z   = 0;
@@ -330,6 +330,8 @@ immediate_quad_with_radius :: (x0: float, y0: float, x1: float, y1: float, color
     put_vertex(*v[5], .{x0, y1}, bounds, color,  0, 1);
 
     glUniform1f(glGetUniformLocation(shader_rect.gl_handle, "radius"), radius);
+    glUniform1f(glGetUniformLocation(shader_rect.gl_handle, "border_thickness"), border_thickness);
+    glUniform4f(glGetUniformLocation(shader_rect.gl_handle, "border_color"), border_color.x, border_color.y, border_color.z, border_color.w);
 }
 
 // Four 2D points making an arbitrary quad, plus a color,

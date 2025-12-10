@@ -44,8 +44,9 @@ list_input :: (r: Rect, ui_id: Ui_Id, options: [] List_Input.Option, font: *Simp
     // Draw the container box
     thickness := 2.0 * dpi_scale; // border thickness
     Simp.set_shader_for_rect();
-    Simp.immediate_quad_with_radius(r.x-thickness, b-thickness, r.x + r.w + thickness, t + thickness, theme.border_color, radius=r_rect_radius); // border
-    Simp.immediate_quad_with_radius(r.x, b, r.x + r.w, t, theme.bg_color, radius=r_rect_radius);
+    bg_color := theme.bg_color;
+    bg_color.w = .95;
+    Simp.immediate_quad_with_radius(r.x, b, r.x + r.w, t, bg_color, radius=r_rect_radius, border_thickness=thickness, theme.border_color);
     Simp.immediate_flush();
 
     if !options.count {

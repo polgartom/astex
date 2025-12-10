@@ -997,8 +997,6 @@ draw_selection :: (editor: *Editor, buffer: *Buffer, r: Rect) {
 }
 
 draw_user_notifications :: () {
-    // kacsa
-    
     WIDTH :: 300;
     font := r_font_tiny;
     
@@ -1028,14 +1026,14 @@ draw_user_notifications :: () {
             it.hovered = true;
             
             fg_color.w = 1.0;
-            bg_color.w = 0.6;
+            bg_color.w = 1.0;
             
             if mouse_clicked {
                 it.closed = true;
             }
         }
         
-        draw_quad_with_radius(rect, bg_color, radius=r_rect_radius);
+        draw_quad_with_radius(rect, bg_color, radius=r_rect_radius, border_thickness=1.5, v4(1,1,1,.2));
         
         baseline := cast(s64)(y + default_text_baseline(font, cast(float)height, .center));
         draw_text(x+10, baseline, it.text, font, fg_color);
@@ -1338,7 +1336,7 @@ draw_find_text_dialog :: () {
 
         // @Temporary: We don't want to set those values on every frame, right?
         theme := Text_Input.DEFAULT_THEME;
-        theme.bg_color = #run hex_to_vec4(0x18_20_20_ff); // 0x122922_ff
+        theme.bg_color = #run hex_to_vec4(0x18_20_20_7f); // 0x122922_ff
         theme.border_color = #run hex_to_vec4(0x18_20_20_ff);
         theme.fg_color = #run hex_to_vec4(0xff_ff_ff_a9);
         theme.placeholder_color = #run hex_to_vec4(0xff_ff_ff_8a);
@@ -1365,7 +1363,7 @@ draw_find_text_dialog :: () {
         r.w *= .30;
 
         Simp.set_shader_for_rect();
-        Simp.immediate_quad_with_radius(r.x - weight, r.y - weight, r.x + r.w + weight, r.y+r.h + weight, theme.bg_color, radius=r_rect_radius);
+        Simp.immediate_quad_with_radius(r.x - weight, r.y - weight, r.x + r.w + weight, r.y+r.h + weight, theme.bg_color, r_rect_radius, 2.0*dpi_scale, theme.border_color);
         hint := tprint("%/%", current_occurrence+1, occurrences.count);
         x := r.x + r.w*.5 - measure_text_width(font, hint)*.5;
         label(xx x, xx (r.y+r.h*.5-ch*.3), hint, font, theme.fg_color);
@@ -1947,9 +1945,9 @@ draw_quad :: (r: Rect, color: Vector4) {
     draw_quad(p0, p1, p2, p3, color);
 }
 
-draw_quad_with_radius :: (r: Rect, color: Vector4, radius := 0.0) {
+draw_quad_with_radius :: (r: Rect, color: Vector4, radius := 0.0, border_thickness := 0.0, border_color := Vector4.{1,1,1,1}) {
     Simp.set_shader_for_rect();
-    Simp.immediate_quad_with_radius(r.x, r.y, r.x + r.w, r.y + r.h, color, radius=radius);
+    Simp.immediate_quad_with_radius(r.x, r.y, r.x + r.w, r.y + r.h, color, radius, border_thickness, border_color);
 }
 
 push_scissor :: (_rect: Rect) {

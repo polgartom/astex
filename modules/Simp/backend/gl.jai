@@ -259,11 +259,39 @@ void main() {
 
 
 #ifdef FRAGMENT_SHADER
+// in vec2 local_pos;
+// flat in vec4 rect_bounds;
+// out vec4 color;
+// 
+// uniform float radius;
+// 
+// void main() {
+    // float x0 = rect_bounds.x;
+    // float x1 = rect_bounds.y;
+    // float y0 = rect_bounds.z;
+    // float y1 = rect_bounds.w;
+// 
+    // vec2 size = vec2(x1 - x0, y1 - y0);
+    // vec2 center = vec2((x0 + x1) * 0.5, (y0 + y1) * 0.5);
+    // vec2 p = abs(local_pos - center);
+    // vec2 inner = (size * 0.5) - vec2(radius);
+// 
+    // float dist = length(max(p - inner, 0.0)) - radius;
+    // float alpha = 1.0 - smoothstep(0.0, fwidth(dist), dist);
+// 
+    // if (alpha <= 0.0)
+        // discard;
+// 
+    // color = vec4(iterated_color.rgb, iterated_color.a * alpha);
+// }
+
 in vec2 local_pos;
 flat in vec4 rect_bounds;
 out vec4 color;
 
 uniform float radius;
+uniform float border_thickness;
+uniform vec4 border_color;    // RGBA for border
 
 void main() {
     float x0 = rect_bounds.x;
@@ -274,15 +302,48 @@ void main() {
     vec2 size = vec2(x1 - x0, y1 - y0);
     vec2 center = vec2((x0 + x1) * 0.5, (y0 + y1) * 0.5);
     vec2 p = abs(local_pos - center);
-    vec2 inner = (size * 0.5) - vec2(radius);
+    vec2 half_size = size * 0.5;
 
-    float dist = length(max(p - inner, 0.0)) - radius;
-    float alpha = 1.0 - smoothstep(0.0, fwidth(dist), dist);
+    // Outer rounded rect SDF
+    float outer_r = radius;
+    float outer_dist = length(max(p - (half_size - outer_r), 0.0)) - outer_r;
 
-    if (alpha <= 0.0)
+    // Inner rounded rect SDF (shrunk by border_thickness)
+    float inner_r = max(radius - border_thickness, 0.0);
+    vec2 inner_half = half_size - vec2(border_thickness);
+    // Prevent negative inner_half which would invert the shape for tiny rects
+    inner_half = max(inner_half, vec2(0.0));
+    float inner_dist = length(max(p - (inner_half - inner_r), 0.0)) - inner_r;
+
+    // anti-alias width (use max of both derivatives)
+    float aa = max(fwidth(outer_dist), fwidth(inner_dist));
+    aa = max(aa, 1e-4); // avoid 0
+
+    // masks: 1 inside, 0 outside
+    float outer_mask = 1.0 - smoothstep(0.0, aa, outer_dist);
+    float inner_mask = 1.0 - smoothstep(0.0, aa, inner_dist);
+
+    // border is the ring between outer and inner
+    float border_mask = clamp(outer_mask - inner_mask, 0.0, 1.0);
+    float fill_mask = inner_mask;
+
+    // discard fully transparent fragments (outside outer rounded rect)
+    if (outer_mask <= 0.0)
         discard;
 
-    color = vec4(iterated_color.rgb, iterated_color.a * alpha);
+    // compose colors: vertex color = fill, border_color = uniform
+    vec3 fill_rgb = iterated_color.rgb;
+    float fill_a = iterated_color.a;
+
+    vec3 b_rgb = border_color.rgb;
+    float b_a = border_color.a;
+
+    // rgb and alpha contribution (disjoint masks: fill_mask + border_mask <= 1)
+    vec3 out_rgb = fill_rgb * fill_mask + b_rgb * border_mask;
+    float out_a = fill_a * fill_mask + b_a * border_mask;
+
+    // premultiply alpha (optionally) or output straight
+    color = vec4(out_rgb, out_a);
 }
 
 #endif // FRAGMENT_SHADER

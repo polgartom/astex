@@ -199,7 +199,7 @@ MoveCurrentTabToRightEditor :: () {
     found := find_buffer_within_editor_tabs(current_editor, buffer);
     assert(found);
     
-    if current_editor.tabs.count == 1 {
+    if current_editor.tabs.count == 1 && right_editor.tabs.count == 0 {
         found := find_buffer_within_editor_tabs(right_editor, buffer);
         if !found {
             buffer.cursor_backup[1] = current_editor.cursor;

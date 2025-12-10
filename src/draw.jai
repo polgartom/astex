@@ -277,6 +277,8 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
                     // any selection during mouse-down unless Shift is pressed. We should decide how
                     // we want to handle this.
                     
+                    log("> %\n", frame_start_time_ms - mouse_dbl_clicked_last_time_ms);
+                    
                     active_editor = editor;
                     
                     mx, my, ok := get_mouse_pointer_position(right_handed=false);
@@ -1125,7 +1127,6 @@ draw_buffer_browser :: () {
     linp_theme := List_Input.DEFAULT_THEME;
     linp_theme.border_color = #run hex_to_vec4(0x30_25_0a_ff);
     linp_theme.current_item_bg_color = #run hex_to_vec4(0x30_25_0a_ff);
-    log("options: %\n", options);
     linp := list_input(list_rect, buffer_browser.bb_list_input_ui_id, options, font, theme=linp_theme);
     
     if tinp.typed update_visible_options(*buffer_browser);
@@ -1443,7 +1444,7 @@ draw_global_debug_info :: (r: Rect) {
     height := 0.0;
     
     for debug_infos {
-        s := trim(it.str, "\n");
+        s := trim(it, "\n");
         width := measure_text_width(font, s);
         if width > max_width then max_width = width;
         height += line_height;
@@ -1459,7 +1460,7 @@ draw_global_debug_info :: (r: Rect) {
 
     Simp.set_shader_for_text();
     for debug_infos {
-        s := trim(it.str, "\n");
+        s := trim(it, "\n");
 
         w := Simp.prepare_text(font, s);
         baseline += line_height;

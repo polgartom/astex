@@ -101,18 +101,19 @@ _draw_file_browser :: () {
     
     for items {
         if !search_chunk || platform_path_contains(it.short_name, search_chunk) {
-            opt := array_add2(*options);
+            opt := array_add(*options);
             opt.priority = 0;
             opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
             
             memmove(*opt.ref, *it, size_of(File_Visit_Info));
-            if it.is_directory opt.priority += items.count+1;
+            if it.is_directory opt.priority += items.count + 1;
             
             opt.label_prefix_styled.x_offset = xx (2 * dpi_scale);
             if it.is_directory {
-                modify_string(*opt.label_prefix, FOLDER_ICON);
                 opt.label_prefix_styled.font_override = r_font_icons_solid;
-
+                modify_string(*opt.label_prefix, FOLDER_ICON);
+                opt.label_prefix_styled.default_colorv4 = #run hex_to_vec4(0xff_ff_ff_8a);
+                opt.label_prefix_styled.font_override = r_font_icons_solid;
             } else {
                 modify_string(*opt.label_prefix, FILE_ICON);
                 opt.label_prefix_styled.default_colorv4 = #run hex_to_vec4(0xff_ff_ff_8a);
@@ -176,7 +177,7 @@ file_browser_scan :: () {
             return;
         }
 
-        new_item := array_add2(*browser.items);
+        new_item := array_add(*browser.items);
 
         // Replace the temporary allocated strings
         _short_name := advance(info.full_name, file_browser.current_dir.count);

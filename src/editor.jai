@@ -782,7 +782,7 @@ add_history :: (editor: *Editor, using buffer: *Buffer, new_history: Buffer_Hist
         Clamp(*history_index, -1, history.count-1);
     }
 
-    h := array_add2(*history);
+    h := array_add(*history);
     h.type   = new_history.type;
     h.range  = new_history.range;
     h.cursor = new_history.cursor;
@@ -816,7 +816,7 @@ add_history :: (editor: *Editor, using buffer: *Buffer, $type: Buffer_History.Ty
         Clamp(*history_index, -1, history.count-1);
     }
 
-    h := array_add2(*history);
+    h := array_add(*history);
     h.type   = type;
     h.range  = range;
     h.cursor = editor.cursor;
@@ -1580,7 +1580,7 @@ init_editor_commands :: (custom_commands: [] Editor_Command) {
     array_reset_keeping_memory(*editor_commands);
         
     for DEFAULT_EDITOR_COMMANDS {
-        cmd := array_add2(*editor_commands);
+        cmd := array_add(*editor_commands);
         cmd.proc = it.proc;
         cmd.custom_command = false;
         modify_string(*cmd.name, it.name);
@@ -1588,7 +1588,7 @@ init_editor_commands :: (custom_commands: [] Editor_Command) {
     }
     
     for custom_commands {
-        cmd := array_add2(*editor_commands);
+        cmd := array_add(*editor_commands);
         cmd.proc = null;
         cmd.custom_command = true;
         modify_string(*cmd.name, it.name);

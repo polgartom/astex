@@ -678,7 +678,7 @@ maybe_set_hot :: (id: Ui_Id, rect: Rect) -> bool {
 show_debug_info := DEBUG;
 show_profiler := false;
 show_font_debug_info := false;
-debug_infos: [..] Reusable_String;
+debug_infos: [..] string;
 
 PrintDev :: (fmt: string, args: .. Any) #expand {
     // Not recommented to use the temporary allocated string for the debug info array, because
@@ -687,9 +687,10 @@ PrintDev :: (fmt: string, args: .. Any) #expand {
     // allocation / deallocation per frame.
     
     s := tprint(fmt, ..args);
+    array_add(*debug_infos, s);
     
-    rstr := array_add2(*debug_infos);
-    modify_rstring(rstr, s);
+    // rstr := array_add2(*debug_infos);
+    // modify_rstring(rstr, s);
 } @PrintLike
 
 ll :: (fmt: string, args: .. Any) #expand {

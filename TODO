@@ -119,3 +119,38 @@ handle_exception                  C:\jai\modules\Runtime_Support_Crash_Handler.j
 rescan_line_ends                  C:\jai\modules\String\module.jai:1307
 command_runner_update             K:\Programming\astex\src\command_runner.jai:49
 main                              K:\Programming\astex\src\main.jai:257
+
+------------------------------------------------
+
+The program crashed because of an access violation reading location 0xffffffffffffffff.
+
+Printing the stack trace:
+handle_exception                  C:\jai\modules\Runtime_Support_Crash_Handler.jai:356
+... (skipping OS-internal procedures)
+deallocate                        C:\jai\modules\Default_Allocator\module.jai:1630
+allocator_proc                    C:\jai\modules\Default_Allocator\module.jai:45
+modify_string                     C:\jai\modules\Basic\module.jai:174
+open_buffer_browser               K:\Programming\astex\src\widget\buffer_browser.jai:34
+keymap_handle_event               K:\Programming\astex\modules\Keymap\module.jai:408
+main                              K:\Programming\astex\src\main.jai:184
+
+------------------------------------------------
+
+The program crashed because it tried to read from a null pointer.
+
+Printing the stack trace:
+handle_exception                  C:\jai\modules\Runtime_Support_Crash_Handler.jai:356
+... (skipping OS-internal procedures)
+print_item_to_builder             C:\jai\modules\Basic\Print.jai:677
+append_struct_info                C:\jai\modules\Basic\Print.jai:484
+print_item_to_builder             C:\jai\modules\Basic\Print.jai:791
+append_struct_info                C:\jai\modules\Basic\Print.jai:484
+print_item_to_builder             C:\jai\modules\Basic\Print.jai:791
+print_array                       C:\jai\modules\Basic\Print.jai:1174
+print_item_to_builder             C:\jai\modules\Basic\Print.jai:797
+print_to_builder                  C:\jai\modules\Basic\Print.jai:1105
+log                               C:\jai\modules\Basic\Print.jai:357
+draw_buffer_browser               K:\Programming\astex\src\draw.jai:1128
+draw_widgets                      K:\Programming\astex\src\draw.jai:1001
+draw_frame                        K:\Programming\astex\src\draw.jai:142
+main                              K:\Programming\astex\src\main.jai:317

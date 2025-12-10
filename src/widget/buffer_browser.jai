@@ -8,7 +8,6 @@ open_buffer_browser :: () {
     }
     
     array_reset_keeping_memory(*options);
-    array_reserve(*options, buffers.count);
 
     wd := get_workdir();
 
@@ -27,13 +26,11 @@ open_buffer_browser :: () {
             title = b.name;
         }
 
-        opt := array_add2(*options);
+        opt := array_add(*options);
         opt.ref = b;
         opt.priority = 0;
         opt.label_styled.default_colorv4 = map_color_to_vec4(.TEXT_DEFAULT);
         modify_string(*opt.label, title);
-        
-        if !b.readonly opt.priority = 1; // prioritize the non-scratch buffers
     }
 
     update_visible_options(*buffer_browser);

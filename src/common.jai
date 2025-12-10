@@ -18,29 +18,30 @@ advance :: (arr: [] $T, steps := 1) -> [] T {
     return r;
 }
 
-array_add2 :: (array: *[..] $T) -> *T {
-	if array.count >= array.allocated {
-        reserve := max(8, 2 * array.count);
-        array_reserve(cast(*Resizable_Array) array, reserve, size_of(T));
-        
-        for index: array.count .. array.allocated {
-            result := *array.data[index];
-            // log("Initialize: % ; [%] ; allocated: %\n", T, result, array.allocated - array.count);
-            
-            ini :: initializer_of(T);
-            #if ini {
-                ini(result);
-            } else {
-                memset(result, 0, size_of(T));
-            }            
-        }
-	}
-
-    result := *array.data[array.count];
-
-    array.count += 1;
-    return result;
-}
+// array_add2 :: (array: *[..] $T) -> *T {
+	// if array.count >= array.allocated {
+        // reserve := max(8, 2 * array.count);
+        // array_reserve(cast(*Resizable_Array) array, reserve, size_of(T));
+//         
+        // for index: array.count .. array.allocated {
+            // result := *array.data[index];
+            // // log("Initialize: % ; [%] ; allocated: %\n", T, result, array.allocated - array.count);
+//             
+            // ini :: initializer_of(T);
+            // #if ini {
+                // log("Initializer: % ; %\n", ini, T);
+                // ini(result);
+            // } else {
+                // memset(result, 0, size_of(T));
+            // }
+        // }
+	// }
+// 
+    // result := *array.data[array.count];
+// 
+    // array.count += 1;
+    // return result;
+// }
 
 //////////////////////////
 // String

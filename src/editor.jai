@@ -1233,9 +1233,9 @@ scroll_to_cursor :: (editor: *Editor, cursor: Cursor, animation_duration: float 
         target += abs(my - y_threshold);
         
         last_ri := buffer.row_table.count-1;
-        if target + editor.rect_for_draw.h > fnt_get_line_height(last_ri) {
+        if target + editor.rect_for_draw.h > fnt_get_line_height(last_ri) { // @Todo :WhiteSpacesAfterLastRow
             // Clamp, so we won't overflow too much after the last row
-            target -= (target + editor.rect_for_draw.h) - (fnt_get_line_height(last_ri) + y_threshold);
+            target -= (target + editor.rect_for_draw.h) - (fnt_get_line_height(last_ri) + y_threshold); // @Todo :WhiteSpacesAfterLastRow
         }
     } else if my + y_threshold > r.h {
         target -= (my + y_threshold) - (r.h);

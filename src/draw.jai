@@ -345,6 +345,7 @@ draw_editor :: (using editor: *Editor, rect: Rect) {
     }
 
     if editor.cursor.moved  {
+        // :RightEditorAnimationHack
         // @Hacky The right editor panel still resizing, so we scrolling to cursor while the animation is active
         if !editors[1].width_anim.active {
             editor.cursor.moved = false;

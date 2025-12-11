@@ -205,6 +205,8 @@ MoveCurrentTabToRightEditor :: () {
             buffer.cursor_backup[1] = current_editor.cursor;
             change_active_buffer(right_editor, buffer); // this procedure adds the buffer to the tabs if needed
             change_active_editor(right_editor);
+            // @Todo: We need to set the rect for draw here somehow, but we can hacky it by setting the cursor to moved!
+            right_editor.cursor.moved = true; // @Hacky!
             return;
         }
     }

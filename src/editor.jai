@@ -1887,6 +1887,7 @@ Buffer :: struct {
     colors: [] Color; @NeedsFree(c_free)
     row_table: [..] Row_Info; @NeedsFree(array_reset)
     cursor_backup: [editors.count] Cursor;
+    // @Todo: Also we need to backup the editors' top and left offsets
     
     language: Language = .PLAIN_TEXT; // @Todo: It's mainly for the system buffers like logs or console output etc..
     

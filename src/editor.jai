@@ -1166,7 +1166,7 @@ change_active_buffer :: (editor: *Editor, next_buffer: *Buffer) {
 
     editor.left_offset = 0.0;
     editor.top_offset  = 0.0;
-    scroll_to_cursor(editor, editor.cursor, animation_duration=0);
+    scroll_to_cursor(editor, editor.cursor, animation_duration=0.0, y_center = true);
     
     next_buffer.accessed_this_frame = frame;
 }
@@ -1184,7 +1184,7 @@ change_active_editor :: (editor: *Editor, change_mode := true) { // @Cleanup
     }
 }
 
-scroll_to_cursor :: (editor: *Editor, cursor: Cursor, animation_duration: float = 0.08) {
+scroll_to_cursor :: (editor: *Editor, cursor: Cursor, animation_duration: float = 0.08, y_center := false) {
     assert(editor.active_buffer != null);
     buffer := editor.active_buffer;
     r := editor.rect_for_draw;
@@ -1219,13 +1219,24 @@ scroll_to_cursor :: (editor: *Editor, cursor: Cursor, animation_duration: float 
     }
 
     // Viewport (Y)
-    y_threshold := fnt_get_line_height() * 6; // @Todo :WhiteSpacesAfterLastRow
+    y_threshold := fnt_get_line_height() * 6; // @Todo :WhiteSpacesAfterLastRow    
     my := fnt_get_line_height(find_row_index(buffer, editor.cursor.pos));
+    
+    if y_center {
+        r.h = r.h / 2;
+    }
+    
     my = r.h - my + editor.top_offset;
-
+    
     target = editor.top_offset;
     if my - y_threshold < 0 {
         target += abs(my - y_threshold);
+        
+        last_ri := buffer.row_table.count-1;
+        if target + editor.rect_for_draw.h > fnt_get_line_height(last_ri) {
+            // Clamp, so we won't overflow too much after the last row
+            target -= (target + editor.rect_for_draw.h) - (fnt_get_line_height(last_ri) + y_threshold);
+        }
     } else if my + y_threshold > r.h {
         target -= (my + y_threshold) - (r.h);
         if target < 0 then target = 0;

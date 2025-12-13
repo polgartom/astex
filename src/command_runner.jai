@@ -81,12 +81,6 @@ Custom_Command_Work :: struct {
     command: string;
 }
 
-stdout: String_Builder;
-stderr: String_Builder;
-output_lock: Mutex;
-
-current_work: *Custom_Command_Work;
-
 command_threadproc :: (group: *Thread_Group, thread: *Thread, _work: *void) -> Thread_Continue_Status {
     assert(_work != null);
     
@@ -160,4 +154,9 @@ command_threadproc :: (group: *Thread_Group, thread: *Thread, _work: *void) -> T
     return .CONTINUE;
 }
 
+stdout: String_Builder;
+stderr: String_Builder;
+
 thread_group: Thread_Group;
+current_work: *Custom_Command_Work;
+output_lock: Mutex;

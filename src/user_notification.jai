@@ -28,9 +28,12 @@ user_notifications_update :: () {
         }
     }
     
+    quick_sort(removes, (a, b) => (a - b));
+    removed := 0;
     for index: removes {
-        array_ordered_remove_by_index(*user_notifications, index);
-    }    
+        array_ordered_remove_by_index(*user_notifications, index - removed);
+        removed += 1;
+    }
 }
 
 get_bg_color :: (level: User_Notification.Level) -> Vector4 {

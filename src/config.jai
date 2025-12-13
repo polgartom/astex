@@ -61,7 +61,7 @@ load_project_config :: () {
 
     section, valid= := get_section_as_string("custom_commands", file_data);
     if !valid {
-        log_error("Invalid or empty custom_commands section in the project config file!\n");
+        report_config_error("Invalid or empty custom_commands section in the project config file!\n");
         return;
     }
     
@@ -77,7 +77,7 @@ load_project_config :: () {
                 case "name";
                     val := trim(rhs);
                     if !begins_with(val, "\"") || !ends_with(val, "\"") {
-                        log_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
+                        report_config_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
                         continue;
                     }
                     val = advance(val, 1);
@@ -86,7 +86,7 @@ load_project_config :: () {
                 case "exec";
                     val := trim(rhs);
                     if !begins_with(val, "\"") || !ends_with(val, "\"") {
-                        log_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
+                        report_config_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
                         continue;
                     }
                     val = advance(val, 1);
@@ -98,14 +98,14 @@ load_project_config :: () {
                 case "open_panel";
                     val, ok := get_enum_by_name(type_of(Editor_Command.panel_state), rhs);
                     if !ok {
-                        log_error("'%' is !\n", rhs);
+                        report_config_error("'%' is !\n", rhs);
                         continue;
                     }
                     cmd.panel_state = val;
                 case "workdir";
                     val := trim(rhs);
                     if !begins_with(val, "\"") || !ends_with(val, "\"") {
-                        log_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
+                        report_config_error("Invalid 'name' field in the [command] section. You should put its value between \" characters.\n");
                         continue;
                     }
                     val = advance(val, 1);
@@ -115,7 +115,7 @@ load_project_config :: () {
         }
         
         if !cmd.name || !cmd.exec {
-            log_error("Missing parameters for the [command]. The 'name' and the 'exec' parameter must be specified!\n");
+            report_config_error("Missing parameters for the [command]. The 'name' and the 'exec' parameter must be specified!\n");
             continue;
         }
         if !cmd.workdir {
@@ -185,19 +185,19 @@ parse_style_section :: (file_data: string) -> bool {
 
             rhs = join(..split(rhs, "_")); // The jai's numeric separation thing is supported, like '0c_10_21_ff' -> '0c1021ff' 
             if rhs.count != 8 {
-                log_error("Invalid hex value ('%') given after the '%' key specifier!\n", rhs, key);
+                report_config_error("Invalid hex value ('%') given after the '%' key specifier!\n", rhs, key);
                 continue;
             }
 
             result, success, rem := string_to_int(rhs, base=16, u32);
             if !success || rem {
-                log_error("Unable to parse the hex value ('%') given after the '%' key specifier!\n", rhs, key);
+                report_config_error("Unable to parse the hex value ('%') given after the '%' key specifier!\n", rhs, key);
                 continue;
             }
 
             color_enum := get_enum_by_name(Color, key);
             // if color_enum == .NONE {
-            //     log_error("Unable to find the color '%'!\n", key);
+            //     report_config_error("Unable to find the color '%'!\n", key);
             //     continue;
             // }
 
@@ -216,7 +216,7 @@ parse_style_section :: (file_data: string) -> bool {
                 case "font_family";
                     val := trim(rhs);
                     if !val {
-                        log_error("Invalid font name ('%') given after the '%' key specifier!\n", rhs, key);
+                        report_config_error("Invalid font name ('%') given after the '%' key specifier!\n", rhs, key);
                         continue;
                     }
                     path_unify_sepa(font_family); // maybe its a path
@@ -225,14 +225,14 @@ parse_style_section :: (file_data: string) -> bool {
                 case "font_size";
                     val, success, rem := string_to_int(rhs, base=10, u8);
                     if !success || rem {
-                        log_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
+                        report_config_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
                     }
                     font_size = val;
                     
                 case "tab_size";
                     val, success, rem := string_to_int(rhs, base=10, u8);
                     if !success || rem {
-                        log_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
+                        report_config_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
                         continue;
                     }
                     // @Todo: :VirtualTabSize
@@ -246,7 +246,7 @@ parse_style_section :: (file_data: string) -> bool {
                 case "line_height";
                     val, success, rem := string_to_float(rhs);
                     if !success || rem {
-                        log_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
+                        report_config_error("Unable to parse the numeric value ('%') given after the '%' key specifier!\n", rhs, key);
                         continue;
                     }
                     line_height = val;
@@ -254,7 +254,7 @@ parse_style_section :: (file_data: string) -> bool {
                 case "cursor_shape";
                     val, ok := get_enum_by_name(Cursor_Shape, rhs);
                     if !ok {
-                        log_error("'%' is an invalid cursor shape!\n", rhs);
+                        report_config_error("'%' is an invalid cursor shape!\n", rhs);
                         continue;
                     }
                     cursor_shape = val;
@@ -262,7 +262,7 @@ parse_style_section :: (file_data: string) -> bool {
                 case "cursor_line_indicator";
                     val, ok := get_enum_by_name(Cursor_Line_Indicator, rhs);
                     if !ok {
-                        log_error("'%' is an invalid cursor line indicator!\n", rhs);
+                        report_config_error("'%' is an invalid cursor line indicator!\n", rhs);
                         continue;
                     }
                     cursor_line_indicator = val;
@@ -273,7 +273,7 @@ parse_style_section :: (file_data: string) -> bool {
                     } else if rhs == "false" || rhs == "0" {
                         show_line_numbers = false;
                     } else {
-                        log_error("Unable to parse the boolean value ('%') given after the '%' key specifier!\n", rhs, key);
+                        report_config_error("Unable to parse the boolean value ('%') given after the '%' key specifier!\n", rhs, key);
                         continue;
                     }
                     
@@ -283,12 +283,12 @@ parse_style_section :: (file_data: string) -> bool {
                     } else if rhs == "false" || rhs == "0" {
                         draw_invisible_characters = false;
                     } else {
-                        log_error("Unable to parse the boolean value ('%') given after the '%' key specifier!\n", rhs, key);
+                        report_config_error("Unable to parse the boolean value ('%') given after the '%' key specifier!\n", rhs, key);
                         continue;
                     }
                     
                 case;
-                    log_error("Unknown UI parameter '%'!\n", key);
+                    report_config_error("Unknown UI parameter '%'!\n", key);
             };
         }
     }
@@ -372,6 +372,15 @@ Config_Section :: struct {
 DEFAULT_CONFIG_FILE_DATA :: #run read_default_config_data(DEFAULT_CONFIG_FILENAME);
 
 #scope_file
+
+report_config_error :: (fmt: string, args: .. Any) {
+    push_allocator(context.default_allocator);
+    assert(context.allocator.proc != temporary_allocator.proc, "NONO");
+    
+    text := tprint(fmt, ..args);
+    log_error(text);
+    notify_user(text, .ERROR);
+}
 
 break_by_colon :: (line: string) -> (left: string, right: string) {
     found, left, right := split_from_left(line, ":");
